@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Attendance</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#e7e9e4;--card:#fbfbf9;--tx:#25292d;--mu:#5d686e;--bd:#cbd0c8;--tint:#eff1ec;
+  --pr:#1f5c49;--prt:#ffffff;--pr2:#66727c;--stb:#dfe4e6;
+  --ok:#3f7d34;--okb:#e0ecda;--wa:#8a600f;--wab:#f5e8cb;--er:#a3322a;--erb:#f4dad5;
+  --bar:#2d6a56;--over:#b8821f;--low:#c4574b;--plate:#2a3035;--plate-tx:#eceae2;--plate-mu:#a6b0b5;
+  --float:0 8px 28px rgba(25,29,32,.18);
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#1d2124;--card:#262b2f;--tx:#e6e8e3;--mu:#9aa5aa;--bd:#3b4247;--tint:#2d3338;
+  --pr:#76bb9f;--prt:#0f1f19;--pr2:#8d99a3;--stb:#363e44;
+  --ok:#8cc57f;--okb:#26382a;--wa:#e2b65c;--wab:#3d3317;--er:#ea8f86;--erb:#48241f;
+  --bar:#76bb9f;--over:#e2b65c;--low:#e57d6f;--plate:#14181a;--plate-tx:#eceae2;--plate-mu:#8f9a9f;
+  --float:0 8px 28px rgba(0,0,0,.45);
+}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;font:14px/1.5 "Public Sans","Segoe UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--tx);font-variant-numeric:tabular-nums}
+h2,h3,h4{margin:0;font-weight:650;letter-spacing:-.01em}
+h3{font-size:15px;margin:0 0 12px}
+p{margin:0 0 8px}
+.mu{color:var(--mu)}
+:focus-visible{outline:2px solid var(--pr);outline-offset:2px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* shell */
+.app{display:grid;grid-template-columns:232px minmax(0,1fr);min-height:100vh}
+aside{background:var(--card);border-right:1px solid var(--bd);padding:22px 0 16px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow:auto}
+.logo{font-weight:700;font-size:17px;padding:0 22px 20px;letter-spacing:-.015em;line-height:1.25}
+.logo small{display:block;font-weight:400;color:var(--mu);font-size:12.5px;letter-spacing:0;margin-top:2px}
+aside a[data-v]{display:block;padding:8px 22px 8px 19px;color:var(--mu);text-decoration:none;cursor:pointer;border-left:3px solid transparent;font-weight:500}
+aside a[data-v]:hover{color:var(--tx);background:var(--tint)}
+aside a.on{color:var(--tx);font-weight:650;border-left-color:var(--pr);background:var(--tint)}
+.who{margin-top:auto;padding:14px 22px 0;border-top:1px solid var(--bd);font-size:13px;display:flex;gap:10px;align-items:center}
+.av{width:34px;height:34px;border-radius:4px;background:var(--tx);color:var(--card);display:grid;place-items:center;font-weight:650;font-size:13px;flex:none}
+#lo{color:var(--pr);cursor:pointer;font-weight:600}
+main{padding:22px 34px 56px;max-width:1240px;width:100%;min-width:0}
+.top{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:22px;padding-bottom:14px;border-bottom:1px solid var(--bd)}
+.top h2{font-size:22px;font-weight:700;letter-spacing:-.02em}
+.clock{color:var(--mu);font-size:13px}
+.tr{position:relative;display:flex;gap:18px;align-items:center}
+.bell{background:transparent;border:1px solid var(--bd);color:var(--tx);border-radius:4px;padding:6px 12px;font:inherit;font-weight:500;cursor:pointer}
+.bell:hover{border-color:var(--tx)}
+.bell{white-space:nowrap}.bell b{margin-left:8px;background:var(--er);color:#fff;border-radius:3px;font-size:11px;padding:0 6px;font-weight:650;display:none}
+.nbox{position:absolute;right:0;top:46px;width:380px;max-width:92vw;background:var(--card);border:1px solid var(--bd);border-radius:6px;box-shadow:var(--float);z-index:30;display:none;max-height:70vh;overflow:auto}
+.nbox.open{display:block}
+.ni{padding:12px 16px;border-bottom:1px solid var(--bd);cursor:pointer;font-size:13px}.ni:last-child{border-bottom:0}
+.ni.un{background:var(--tint);border-left:3px solid var(--pr);padding-left:13px}.ni b{display:block;font-size:13.5px}.ni span{color:var(--mu);font-size:12px}
+
+/* panels, headings */
+.card{background:var(--card);border:1px solid var(--bd);border-radius:6px;padding:18px 20px;margin-bottom:16px}
+.sh4{font-size:17px;font-weight:700;letter-spacing:-.01em;margin:28px 0 12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:14px}
+.two{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+.two.w{grid-template-columns:minmax(0,1.7fr) minmax(0,1fr)}
+.two>*,.card{min-width:0}
+
+/* forms */
+.fld{display:flex;flex-direction:column;gap:5px}.fld.full{grid-column:1/-1}
+.fld label{font-size:13px;color:var(--mu);font-weight:600}
+input,select,textarea{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:4px;padding:8px 10px;width:100%}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--pr);outline-offset:-1px;border-color:var(--pr)}
+.chk{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--tx)!important;font-weight:400!important;padding-top:6px}.chk input{width:auto}
+.btn{font:inherit;font-weight:600;background:var(--pr);color:var(--prt);border:1px solid var(--pr);border-radius:4px;padding:8px 16px;cursor:pointer}
+.btn:hover{filter:brightness(.92)}
+.btn.sec{background:transparent;color:var(--tx);border-color:var(--bd)}.btn.sec:hover{border-color:var(--tx);filter:none}
+.btn:disabled{opacity:.4;cursor:not-allowed;filter:none}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;margin:10px 0}
+.lk{background:none;border:0;color:var(--pr);cursor:pointer;font:inherit;font-weight:600;padding:0 6px;text-decoration:underline;text-underline-offset:3px}.lk.dg{color:var(--er)}
+.chips{display:inline-flex;flex-wrap:wrap;border:1px solid var(--bd);border-radius:4px;overflow:hidden;background:var(--card)}
+.chip{border:0;border-right:1px solid var(--bd);background:transparent;color:var(--tx);padding:7px 14px;font:inherit;font-weight:500;cursor:pointer}
+.chip:last-child{border-right:0}.chip:hover{background:var(--tint)}.chip.on{background:var(--tx);color:var(--card);font-weight:600}
+
+/* tables, badges, lists */
+.tw{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--bd);white-space:nowrap}
+th{font-size:13px;color:var(--mu);font-weight:600}
+tbody tr:hover{background:var(--tint)}tr.off td{color:var(--mu)}tr.today td{background:var(--tint)}
+.b{display:inline-block;padding:1px 7px;border-radius:3px;font-size:12px;font-weight:600;line-height:1.5}
+.b.ok{background:var(--okb);color:var(--ok)}.b.wa{background:var(--wab);color:var(--wa)}.b.er{background:var(--erb);color:var(--er)}.b.mu{background:var(--stb);color:var(--mu)}
+.kv{display:grid;grid-template-columns:max-content 1fr;gap:7px 22px;margin:12px 0 0}.kv dt{color:var(--mu)}.kv dd{margin:0;word-break:break-word}
+.ls{list-style:none;margin:0;padding:0}.ls li{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--bd)}.ls li:last-child{border:0}.ls .grow{flex:1;min-width:0}
+.dt{width:46px;height:46px;border:1px solid var(--bd);border-radius:4px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:11.5px;color:var(--mu);flex:none;line-height:1.2}.dt b{font-size:17px;color:var(--tx)}
+
+/* dialogs, toast, login */
+.ov{position:fixed;inset:0;background:rgba(25,29,32,.5);display:flex;align-items:center;justify-content:center;padding:16px;z-index:50}
+.md{background:var(--card);border-radius:6px;width:100%;max-width:540px;max-height:90vh;overflow:auto;box-shadow:var(--float)}
+.mh{display:flex;justify-content:space-between;align-items:center;padding:14px 20px;border-bottom:1px solid var(--bd)}.mb{padding:20px}
+.x{background:none;border:0;font-size:22px;color:var(--mu);cursor:pointer;line-height:1}
+#toast{position:fixed;bottom:22px;right:22px;padding:11px 16px;border-radius:4px;background:var(--tx);color:var(--card);border-left:4px solid var(--ok);z-index:99;display:none;max-width:380px;box-shadow:var(--float)}
+#toast.bad{border-left-color:var(--er)}
+.login{max-width:410px;margin:12vh auto;padding:0 16px}.login .card{padding:28px}.login h3{font-size:22px;letter-spacing:-.02em;margin-bottom:6px}
+
+/* the time-clock plate (the one dark element) */
+.head{display:flex;justify-content:space-between;align-items:stretch;gap:24px;flex-wrap:wrap;margin-bottom:20px}
+.head h2{font-size:28px;font-weight:700;letter-spacing:-.025em;line-height:1.2}
+.head p{margin:6px 0 0;color:var(--mu);max-width:46ch}
+.plate{background:var(--plate);color:var(--plate-tx);border-radius:6px;padding:16px 20px 18px;min-width:310px;display:flex;flex-direction:column;gap:10px}
+.plate small{color:var(--plate-mu);font-size:13px}
+.timer{font-size:42px;font-weight:600;letter-spacing:.02em;line-height:1}
+.plate .row{margin:2px 0 0;gap:10px}
+.btn.amber{background:#d9a441;border-color:#d9a441;color:#2a2410}
+.btn.ghost{background:transparent;color:var(--plate-tx);border-color:#58636a}.btn.ghost:hover{border-color:var(--plate-tx);filter:none}
+
+/* figures: one ruled strip instead of a row of identical cards */
+.stats,.kpis{display:flex;flex-wrap:wrap;background:var(--card);border:1px solid var(--bd);border-radius:6px;overflow:hidden;margin-bottom:18px}
+.stat,.kpi{flex:1 1 200px;min-width:0;padding:14px 18px;display:flex;flex-direction:column;gap:3px;min-height:88px;border-right:1px solid var(--bd);border-bottom:1px solid var(--bd);margin:0 -1px -1px 0}
+.stat .l,.kpi small{color:var(--mu);font-size:13px;font-weight:500}
+.stat b,.kpi b{font-size:24px;font-weight:650;letter-spacing:-.02em;line-height:1.2}
+.stat .s,.kpi .mu{font-size:12.5px;color:var(--mu);font-style:normal}
+.stat.ok b{color:var(--ok)}.stat.wa b{color:var(--wa)}.stat.er b{color:var(--er)}
+.kpi.rate{flex:1 1 260px;flex-direction:row;align-items:center;gap:12px}.kpi.rate small{display:block}.kpi.rate svg{flex:none;color:var(--tx)}
+.dl{font-size:12.5px;font-weight:650;margin-right:6px}.dl.up{color:var(--ok)}.dl.dn{color:var(--er)}.dl.eq{color:var(--mu);font-weight:500}
+.sk .l,.sk b,.sk .s{background:var(--bd);color:transparent;border-radius:3px;animation:pulse 1.4s infinite}@keyframes pulse{50%{opacity:.5}}
+
+/* charts */
+.prog{height:8px;background:var(--bd);border-radius:2px;overflow:hidden;margin:10px 0 6px}.prog i{display:block;height:100%;background:var(--bar)}.prog i.ot{background:var(--over)}
+.mini{width:90px;display:inline-block;margin:0 8px 0 0;vertical-align:middle}
+.otc.ask{border-color:var(--over);background:var(--wab)}
+.wc{display:flex;gap:4px;align-items:flex-end;height:220px;border-bottom:1px solid var(--bd);padding-top:14px}
+.wc .col{flex:1;height:100%;position:relative;display:flex;align-items:flex-end;min-width:5px}
+.wc i{width:100%;border-radius:2px 2px 0 0;min-height:3px}
+.wc u{position:absolute;left:-1px;right:-1px;border-top:2px dashed var(--tx);opacity:.7;text-decoration:none;pointer-events:none}
+.wc .col:hover::after,.cd:hover::after{content:attr(data-t);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);margin-bottom:6px;background:var(--tx);color:var(--card);padding:5px 9px;border-radius:4px;font-size:12px;white-space:pre;z-index:6;line-height:1.5;font-weight:500}
+.bl{display:flex;gap:4px;font-size:11.5px;color:var(--mu);margin-top:5px}.bl span{flex:1;text-align:center}
+.leg{display:flex;gap:16px;flex-wrap:wrap;margin-top:12px;font-size:12.5px;color:var(--mu)}.leg span::before{content:"";display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px;background:var(--c)}
+.leg span.dash::before{background:none;border-top:2px dashed var(--tx);height:0;border-radius:0;width:14px;vertical-align:middle}
+.stk{display:flex;flex-direction:column;justify-content:flex-end;width:100%;height:100%;border-radius:2px 2px 0 0;overflow:hidden}.stk s{display:block;text-decoration:none}
+.dn{display:flex;gap:22px;align-items:center;flex-wrap:wrap}.dn svg{color:var(--tx);flex:none}
+.dn ul{list-style:none;margin:0;padding:0;flex:1;min-width:150px}.dn li{display:flex;align-items:center;gap:9px;padding:5px 0}.dn li i{width:10px;height:10px;border-radius:2px}.dn li b{margin-left:auto}
+.hb{list-style:none;margin:0;padding:0}.hb li{display:grid;grid-template-columns:130px 1fr 54px;gap:12px;align-items:center;padding:8px 0}
+.hb .bar{display:flex;height:12px;border-radius:2px;overflow:hidden;background:var(--bd)}.hb .bar i{display:block;height:100%}.hb b{text-align:right}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}.cal .hd{font-size:12px;color:var(--mu);text-align:center}
+.cd{aspect-ratio:1.15;border-radius:3px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:12.5px;font-weight:650;line-height:1.15;position:relative}
+.cd small{font-size:10.5px;font-weight:500}.cd.empty{background:none}
+.cd.ok{background:var(--okb);color:var(--ok)}.cd.ot{background:var(--okb);color:var(--ok);box-shadow:inset 0 -3px 0 var(--over)}.cd.low{background:var(--wab);color:var(--wa)}
+.cd.abs{background:var(--erb);color:var(--er)}.cd.leave{background:var(--stb);color:var(--pr2)}.cd.off{color:var(--mu);border:1px dashed var(--bd)}
+.cd.fut{border:1px solid var(--bd);color:var(--mu);opacity:.55}.cd.live{background:var(--pr);color:var(--prt)}.cd.today{outline:2px solid var(--tx);outline-offset:1px}
+.srch{max-width:220px}
+
+@media(max-width:820px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  aside{position:static;height:auto;flex-direction:row;flex-wrap:wrap;border-right:0;border-bottom:1px solid var(--bd);padding:12px 8px}
+  aside a[data-v]{padding:6px 12px;border-left:0;border-bottom:2px solid transparent}aside a.on{border-bottom-color:var(--pr);background:none}
+  .logo,.who{width:100%;padding:4px 12px}.who{order:9;border-top:0}
+  main{padding:16px}.two,.two.w{grid-template-columns:1fr}.plate{min-width:0;width:100%}
+}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div id="toast"></div>
+<script>
+// Served by FastAPI at /app/ -> same origin. Opened any other way (file, Live Server) -> talk to the backend on port 8000.
+let API = new URLSearchParams(location.search).get('api') || (location.pathname.startsWith('/app') ? location.origin : 'http://127.0.0.1:8000');
+const $ = s => document.querySelector(s);
+let tok = null, me = null, tick, auto, clk, noteTimer, docBound = false;
+try { tok = sessionStorage.getItem('tok'); } catch (e) {}
+
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function toast(m, bad) {
+  const t = $('#toast'); t.textContent = m; t.className = bad ? 'bad' : ''; t.style.display = 'block';
+  clearTimeout(t._t); t._t = setTimeout(() => t.style.display = 'none', 4000);
+}
+const safe = fn => async (...a) => { try { return await fn(...a); } catch (x) { toast(x.message, 1); } };
+
+async function api(path, o = {}) {
+  const h = {}; if (tok) h.Authorization = 'Bearer ' + tok;
+  let body;
+  if (o.json) { h['Content-Type'] = 'application/json'; body = JSON.stringify(o.json); }
+  else if (o.form) { body = new URLSearchParams(); for (const [k, v] of Object.entries(o.form)) if (v !== undefined && v !== null) body.append(k, v); }
+  let r;
+  try { r = await fetch(API + path, { method: o.method || 'GET', headers: h, body }); }
+  catch (e) { throw new Error('Cannot reach the server. Is the backend running?'); }
+  const d = await r.json().catch(() => null);
+  if (r.status === 401 && tok && path !== '/auth/token') { logout(); throw new Error('Session expired. Please sign in again.'); }
+  if (!r.ok) {
+    let m = d && d.detail;
+    if (Array.isArray(m)) m = m.map(e => (e.loc || []).slice(-1) + ': ' + e.msg).join('; ');
+    throw new Error(m && m !== 'Not Found' ? m : (r.status === 404 ? 'Not found (404): ' + (o.method || 'GET') + ' ' + API + path + ' - the server at that address does not have this route (old backend, or a different program on that port).' : 'Request failed (' + r.status + ')'));
+  }
+  return d;
+}
+
+/* ---------- UI helpers ---------- */
+function fld(f) {
+  const v = f.v ?? '';
+  let i;
+  if (f.t === 'select') i = `<select name="${f.n}">${f.o.map(o => { const [val, lab] = Array.isArray(o) ? o : [o, o || '— keep current —']; return `<option value="${esc(val)}"${String(val) === String(v) ? ' selected' : ''}>${esc(lab)}</option>`; }).join('')}</select>`;
+  else if (f.t === 'check') i = `<label class="chk"><input type="checkbox" name="${f.n}"${v === true || v === 'true' ? ' checked' : ''}> ${esc(f.h || 'Enabled')}</label>`;
+  else if (f.t === 'area') i = `<textarea name="${f.n}" rows="3"${f.r ? ' required' : ''}>${esc(v)}</textarea>`;
+  else i = `<input name="${f.n}" type="${f.t || 'text'}" value="${esc(v)}"${f.r ? ' required' : ''}${f.s ? ` step="${f.s}"` : ''}${f.p ? ` placeholder="${esc(f.p)}"` : ''}>`;
+  return `<div class="fld${f.t === 'area' ? ' full' : ''}"><label>${esc(f.l)}</label>${i}</div>`;
+}
+const formHTML = (fs, btn) => `<form class="grid">${fs.map(fld).join('')}<div class="fld full"><div><button class="btn">${btn}</button></div></div></form>`;
+function bind(root, fs, fn) {
+  const form = root.querySelector('form');
+  form.onsubmit = async e => {
+    e.preventDefault();
+    const o = {}; for (const f of fs) { const el = form.elements[f.n]; o[f.n] = f.t === 'check' ? String(el.checked) : f.t === 'password' ? el.value : el.value.trim(); }
+    const b = form.querySelector('button'); b.disabled = true;
+    try { await fn(o); } catch (x) { toast(x.message, 1); }
+    b.disabled = false;
+  };
+}
+function modal(title, html) {
+  const m = document.createElement('div'); m.className = 'ov';
+  m.innerHTML = `<div class="md"><div class="mh"><b>${esc(title)}</b><button class="x">×</button></div><div class="mb">${html}</div></div>`;
+  m.querySelector('.x').onclick = () => m.remove();
+  m.onclick = e => { if (e.target === m) m.remove(); };
+  document.body.appendChild(m); return m;
+}
+const bdg = s => `<span class="b ${({PRESENT:'ok',HALF_DAY:'wa',ABSENT:'er',ON_LEAVE:'mu',INCOMPLETE:'wa',APPROVED:'ok',PENDING:'wa',REJECTED:'er',COMPLETED:'ok',RESOLVED:'ok',IN_PROGRESS:'wa',OPEN:'wa',UNDER_REVIEW:'wa',FLAGGED:'er',NOT_CHECKED_IN:'er'})[s] || 'mu'}">${esc(label(String(s).toLowerCase()))}</span>`;
+const yn = v => v ? 'Yes' : 'No';
+const tbl = (h, r) => r.length ? `<div class="tw"><table><thead><tr>${h.map(x => `<th>${x}</th>`).join('')}</tr></thead><tbody>${r.map(x => `<tr>${x.map(c => `<td>${c ?? ''}</td>`).join('')}</tr>`).join('')}</tbody></table></div>` : '<p class="mu">Nothing to show yet.</p>';
+const label = k => k.replace(/_/g, ' ').replace(/^./, c => c.toUpperCase());
+const fmt = v => v === null || v === undefined ? '—' : typeof v === 'boolean' ? yn(v) : /^\d{4}-\d\d-\d\dT/.test(v) ? new Date(v).toLocaleString() : esc(v);
+const kv = o => `<dl class="kv">${Object.entries(o).filter(([k]) => k !== 'message').map(([k, v]) => `<dt>${esc(label(k))}</dt><dd>${fmt(v)}</dd>`).join('')}</dl>`;
+const isAdmin = () => me.role === 'SUPER_ADMIN';
+
+/* ---------- Auth ---------- */
+function logout() { clearInterval(tick); clearInterval(auto); clearInterval(clk); clearInterval(noteTimer); tok = null; me = null; try { sessionStorage.removeItem('tok'); } catch (e) {} showLogin(); }
+function showLogin() {
+  const fs = [{ n: 'username', l: 'Email', t: 'email', r: 1 }, { n: 'password', l: 'Password', t: 'password', r: 1 }];
+  $('#root').innerHTML = `<div class="login"><div class="card"><h3>Attendance</h3><p class="mu">Sign in with your work email and password.</p>${formHTML(fs, 'Sign in')}<p id="lerr" style="color:var(--er);margin:12px 0 0"></p></div></div>`;
+  bind($('#root'), fs, async v => {
+    $('#lerr').textContent = '';
+    try {
+      const d = await api('/auth/token', { method: 'POST', form: v });
+      tok = d.access_token; try { sessionStorage.setItem('tok', tok); } catch (e) {}
+      await boot();
+    } catch (x) { const l = $('#lerr'); if (l) l.textContent = x.message; throw x; }
+  });
+}
+async function boot() {
+  try { me = await api('/auth/me'); } catch (e) { tok = null; showLogin(); const l = $('#lerr'); if (l) l.textContent = 'Login worked, but loading your profile failed: ' + e.message; return; }
+  render();
+}
+
+/* ---------- Shell & routing ---------- */
+const NAV = [
+  ['home', 'Dashboard', 'ALL'], ['leaves', 'My leaves', 'EMPLOYEE,MANAGER'], ['approvals', 'Approvals', 'MANAGER,SUPER_ADMIN'],
+  ['wfh', 'Work from home', 'EMPLOYEE,MANAGER'], ['wfhapprovals', 'WFH approvals', 'MANAGER,SUPER_ADMIN'],
+  ['workingtime', 'Working time', 'ALL'], ['attendance', 'My attendance', 'ALL'], ['team', 'Team attendance', 'MANAGER,SUPER_ADMIN'], ['conflicts', 'Conflicts', 'MANAGER,SUPER_ADMIN'],
+  ['holidays', 'Holidays', 'ALL'], ['shifts', 'Shifts', 'ALL'], ['employees', 'Employees', 'SUPER_ADMIN'], ['balances', 'Leave balances', 'SUPER_ADMIN'], ['corrections', 'Attendance corrections', 'SUPER_ADMIN'], ['autoclosed', 'Auto-closed records', 'SUPER_ADMIN'], ['automation', 'Automation', 'SUPER_ADMIN'], ['emailadmin', 'Email management', 'SUPER_ADMIN'],
+  ['settings', 'Company settings', 'SUPER_ADMIN'], ['audit', 'Audit log', 'SUPER_ADMIN'], ['password', 'Change password', 'ALL']
+];
+function render() {
+  const items = NAV.filter(n => n[2] === 'ALL' || n[2].split(',').includes(me.role));
+  $('#root').innerHTML = `<div class="app"><aside><div class="logo">Attendance<small>Employee records</small></div>${items.map(n => `<a data-v="${n[0]}">${n[1]}</a>`).join('')}<div class="who"><div class="av">${esc((me.first_name[0] || '') + (me.last_name[0] || ''))}</div><div><b>${esc(me.first_name)} ${esc(me.last_name)}</b><br><span class="mu">${esc(ROLE[me.role])}</span><br><a id="lo">Sign out</a></div></div></aside><main><div class="top"><h2 id="pt"></h2><div class="tr"><div class="clock" id="clk"></div><button class="bell" id="bell">Notifications<b id="bc"></b></button><div class="nbox" id="nbox"></div></div></div><div id="view"></div></main></div>`;
+  clearInterval(clk);
+  const paintClock = () => { const e = $('#clk'); if (e) e.textContent = new Date().toLocaleString([], { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit', second: '2-digit' }); };
+  paintClock(); clk = setInterval(paintClock, 1000);
+  document.querySelectorAll('aside a[data-v]').forEach(a => a.onclick = () => { location.hash = a.dataset.v; });
+  $('#lo').onclick = logout;
+  startNotes();
+  route();
+}
+function route() {
+  if (!me) return;
+  let v = location.hash.slice(1) || 'home';
+  if (!NAV.some(n => n[0] === v && (n[2] === 'ALL' || n[2].split(',').includes(me.role)))) v = 'home';
+  document.querySelectorAll('aside a[data-v]').forEach(a => a.classList.toggle('on', a.dataset.v === v));
+  clearInterval(tick); clearInterval(auto);
+  $('#pt').textContent = NAV.find(n => n[0] === v)[1];
+  const el = $('#view'); if (el) VIEWS[v](el);
+}
+window.addEventListener('hashchange', route);
+
+
+/* ---------- Notifications + the "are you still working?" question ---------- */
+const shownPrompts = new Set();
+function startNotes() {
+  clearInterval(noteTimer);
+  $('#bell').onclick = e => { e.stopPropagation(); $('#nbox').classList.toggle('open'); };
+  if (!docBound) { docBound = true; document.addEventListener('click', ev => { const b = $('#nbox'); if (b && !ev.target.closest('#nbox')) b.classList.remove('open'); }); }
+  pollNotes(); noteTimer = setInterval(pollNotes, 30000);
+}
+const pollNotes = safe(async () => {
+  if (!me) return;
+  const d = await api('/notifications/?limit=15');
+  const bc = $('#bc'); if (bc) { bc.textContent = d.unread > 9 ? '9+' : d.unread; bc.style.display = d.unread ? 'inline-block' : 'none'; }
+  const box = $('#nbox');
+  if (box) {
+    box.innerHTML = `<div class="mh"><b>Notifications</b><button class="lk" id="rall">Mark all read</button></div>` + (d.items.length ? d.items.map(n => `<div class="ni ${n.is_read ? '' : 'un'}" data-id="${n.id}"><b>${esc(n.title)}</b>${esc(n.message)}<br><span>${new Date(n.created_at).toLocaleString()}</span></div>`).join('') : '<p class="mu" style="padding:16px">No notifications yet.</p>');
+    $('#rall').onclick = safe(async () => { await api('/notifications/read-all', { method: 'POST' }); pollNotes(); });
+    box.querySelectorAll('.ni').forEach(n => n.onclick = safe(async () => { await api('/notifications/' + n.dataset.id + '/read', { method: 'POST' }); pollNotes(); }));
+  }
+  const st = await api('/overtime/status').catch(() => null);     // the question pops up on any page
+  if (st && st.state === 'AWAITING_RESPONSE') {
+    const key = st.prompt_id + ':' + st.reminders_sent;
+    if (!shownPrompts.has(key) && !document.querySelector('.ov')) { shownPrompts.add(key); askOvertime(st); }
+  }
+});
+function askOvertime(st) {
+  const m = modal('Are you still working?', `<p>You have completed your required <b>${hm(st.required_minutes)}</b> (worked ${hm(st.worked_minutes)}). <b>Are you still working overtime?</b></p><p class="mu">${st.reminders_sent ? 'Reminder ' + st.reminders_sent + ' of ' + st.max_reminders + '. ' : ''}If you do not answer, your attendance is closed automatically and a Super Admin reviews it.</p><div class="row"><button class="btn" id="otyes">Yes, I'm working overtime</button><button class="btn sec" id="otno">No, check me out</button></div>`);
+  const done = () => { m.remove(); pollNotes(); if ((location.hash.slice(1) || 'home') === 'home') route(); };
+  $('#otyes').onclick = safe(async () => { toast((await api('/overtime/confirm', { method: 'POST' })).message); done(); });
+  $('#otno').onclick = safe(async () => { toast((await api('/attendance/check-out', { method: 'POST' })).message); done(); });
+}
+function renderOT(st, reload) {
+  const el = $('#ot'); if (!el) return;
+  if (!st || (!st.active && st.state === 'IDLE')) { el.innerHTML = ''; return; }
+  if (!st.active) { el.innerHTML = `<div class="card otc ask"><h3>Attendance closed automatically</h3><p style="margin:0">You did not answer the overtime questions, so your attendance was closed provisionally at <b>${tm(st.closed_at)}</b>. A Super Admin will review it. If you worked longer, ask them to correct it.</p></div>`; return; }
+  const over = st.worked_minutes > st.required_minutes, ask = st.state === 'AWAITING_RESPONSE', pct = Math.min(100, st.worked_minutes / st.required_minutes * 100);
+  const msg = ask ? `You completed your required hours. <b>Are you still working overtime?</b>${st.reminders_sent ? ' Reminder ' + st.reminders_sent + ' of ' + st.max_reminders + '.' : ''}`
+    : st.state === 'OVERTIME_CONFIRMED' ? `Overtime confirmed: <b>${hm(st.overtime_minutes)}</b> so far. Your attendance stays open until you check out.${st.next_reminder_at ? ' Next reminder about ' + tm(st.next_reminder_at) + '.' : ''}`
+    : st.completes_at ? `Your required hours will be complete at about <b>${tm(st.completes_at)}</b>.` : '';
+  el.innerHTML = `<div class="card otc${ask ? ' ask' : ''}"><h3>${over ? 'Overtime' : 'Working time'}: ${hm(st.worked_minutes)} of ${hm(st.required_minutes)}</h3><div class="prog"><i class="${over ? 'ot' : ''}" style="width:${pct}%"></i></div><p style="margin:6px 0 0">${msg}</p>${ask ? '<div class="row"><button class="btn" id="oty">Yes, still working</button><button class="btn sec" id="otn">No, check me out</button></div>' : ''}</div>`;
+  if (ask) {
+    $('#oty').onclick = safe(async () => { toast((await api('/overtime/confirm', { method: 'POST' })).message); reload(); pollNotes(); });
+    $('#otn').onclick = safe(async () => { toast((await api('/attendance/check-out', { method: 'POST' })).message); reload(); pollNotes(); });
+  }
+}
+
+/* ---------- Dashboard ---------- */
+const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+const hm = m => { m = Math.max(0, Math.round(m || 0)); return Math.floor(m / 60) + 'h ' + String(m % 60).padStart(2, '0') + 'm'; };
+const stat = (ic, tone, label, val, sub) => `<div class="stat ${tone || ''}"><span class="l">${label}</span><b>${val}</b>${sub ? `<span class="s">${sub}</span>` : ''}</div>`;
+const skel = n => Array(n).fill('<div class="stat sk"><span class="l">loading</span><b>0000</b><span class="s">loading data</span></div>').join('');
+const list = rows => rows.length ? `<ul class="ls">${rows.map(r => `<li>${r}</li>`).join('')}</ul>` : '<p class="mu">Nothing here right now.</p>';
+function donut(items, centre) {
+  const tot = items.reduce((a, i) => a + i.v, 0); let off = 0;
+  if (!tot) return '<p class="mu">No data yet.</p>';
+  const arcs = items.filter(i => i.v).map(i => { const p = i.v / tot * 100, c = `<circle r="15.9155" cx="21" cy="21" fill="none" stroke-width="5" style="stroke:var(--${i.c})" stroke-dasharray="${p} ${100 - p}" stroke-dashoffset="${-off}"/>`; off += p; return c; }).join('');
+  return `<div class="dn"><svg viewBox="0 0 42 42" width="140" height="140"><g transform="rotate(-90 21 21)">${arcs}</g><text x="21" y="23" text-anchor="middle" font-size="${String(centre ?? tot).length > 3 ? 6.2 : 8}" font-weight="700" fill="currentColor">${centre ?? tot}</text></svg><ul>${items.map(i => `<li><i style="background:var(--${i.c})"></i>${esc(i.l)}<b>${i.v}</b></li>`).join('')}</ul></div>`;
+}
+const dayLabel = iso => { const d = new Date(iso + 'T00:00:00'); return d.toLocaleDateString([], { weekday: 'short' }) + ' ' + d.getDate(); };
+const g2 = p => api(p).catch(() => null);
+
+/* ---------- Dashboard building blocks ---------- */
+const pctTxt = v => v == null ? '\u2014' : v + '%';
+const dlt = (cur, prev, goodUp, f) => {
+  if (cur == null || prev == null) return '';
+  const d = cur - prev;
+  if (!d) return '<span class="dl eq">same as last month</span>';
+  return `<span class="dl ${(d > 0) === goodUp ? 'up' : 'dn'}">${d > 0 ? '+' : '\u2212'}${f ? f(Math.abs(d)) : Math.abs(d)}</span>`;
+};
+const kpi = (label, value, sub, dl) => `<div class="kpi"><small>${label}</small><b>${value}</b><div>${dl || ''}${sub ? `<span class="mu">${sub}</span>` : ''}</div></div>`;
+const ring = (p, text, color) => `<svg viewBox="0 0 42 42" width="64" height="64"><circle r="15.9155" cx="21" cy="21" fill="none" stroke="var(--bd)" stroke-width="4"/><circle r="15.9155" cx="21" cy="21" fill="none" stroke-width="4" stroke-linecap="round" style="stroke:${color}" stroke-dasharray="${p} ${100 - p}" transform="rotate(-90 21 21)"/><text x="21" y="23.2" text-anchor="middle" font-size="${String(text).length > 3 ? 8 : 9.5}" font-weight="700" fill="currentColor">${text}</text></svg>`;
+const rateKpi = (label, p, sub, dl) => `<div class="kpi rate">${ring(p || 0, pctTxt(p), p == null ? 'var(--bd)' : p >= 90 ? 'var(--ok)' : p >= 75 ? 'var(--wa)' : 'var(--er)')}<div><small>${label}</small><div style="margin:4px 0">${dl || ''}</div><span class="mu">${sub}</span></div></div>`;
+const PAL = ['pr', 'wa', 'pr2', 'er', 'ok', 'mu'];
+function lineChart(pts, max, fmt) {
+  const W = 320, H = 130, L = 18, R = 26, T = 16, B = 22, n = pts.length;
+  const x = i => L + (n === 1 ? (W - L - R) / 2 : i * (W - L - R) / (n - 1)), y = v => T + (H - T - B) * (1 - Math.min(v, max) / max);
+  const have = pts.map((p, i) => p.v == null ? null : [x(i), y(p.v)]);
+  const path = have.filter(Boolean).map(p => p.join(',')).join(' ');
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto"><g stroke="var(--bd)">${[0, .5, 1].map(g => `<line x1="${L}" x2="${W - R}" y1="${T + (H - T - B) * g}" y2="${T + (H - T - B) * g}"/>`).join('')}</g>${path ? `<polyline points="${path}" fill="none" stroke="var(--pr)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>` : ''}${have.map((p, i) => p ? `<circle cx="${p[0]}" cy="${p[1]}" r="4" fill="var(--pr)"><title>${esc(pts[i].l)}: ${fmt(pts[i].v)}</title></circle><text x="${p[0]}" y="${p[1] - 8}" text-anchor="middle" font-size="9" fill="currentColor">${fmt(pts[i].v)}</text>` : '').join('')}${pts.map((p, i) => `<text x="${x(i)}" y="${H - 6}" text-anchor="middle" font-size="9.5" fill="var(--mu)">${esc(p.l)}</text>`).join('')}</svg>`;
+}
+function monthBars(tr) {
+  const max = Math.max(60, ...tr.map(t => Math.max(t.worked_minutes, t.required_minutes))) * 1.12;
+  const cols = tr.map(t => `<div class="col" data-t="${esc(t.label + '\nWorked ' + hm(t.worked_minutes) + '\nRequired ' + hm(t.required_minutes))}"><i style="height:${Math.max(1.5, t.worked_minutes / max * 100)}%;background:${!t.worked_minutes ? 'var(--bd)' : t.worked_minutes >= t.required_minutes ? 'var(--bar)' : 'var(--low)'}"></i>${t.required_minutes ? `<u style="bottom:${t.required_minutes / max * 100}%"></u>` : ''}</div>`).join('');
+  return `<div class="wc" style="height:150px">${cols}</div><div class="bl">${tr.map(t => `<span>${esc(t.label)}</span>`).join('')}</div><div class="leg"><span style="--c:var(--bar)">Worked</span><span style="--c:var(--low)">Below required</span><span class="dash">Required</span></div>`;
+}
+function teamBars(daily, total) {
+  const seg = (n, c) => n ? `<s style="height:${n / Math.max(1, total) * 100}%;background:${c}"></s>` : '';
+  const cols = daily.map(d => `<div class="col" data-t="${esc(dayLabel(d.date) + '\nPresent ' + d.present + '\nOn leave ' + d.on_leave + '\nAbsent ' + d.absent + '\nLate ' + d.late + '\nAvg ' + hm(d.average_worked_minutes))}"><div class="stk">${seg(d.absent, 'var(--er)')}${seg(d.on_leave, 'var(--pr2)')}${seg(d.present, 'var(--ok)')}</div></div>`).join('');
+  return `<div class="wc">${cols}</div><div class="bl">${daily.map(d => `<span>${d.date.slice(8)}</span>`).join('')}</div><div class="leg"><span style="--c:var(--ok)">Present</span><span style="--c:var(--pr2)">On leave</span><span style="--c:var(--er)">Absent</span></div>`;
+}
+const dayClass = (x, todayKey) => x.worked_minutes > 0 ? (x.live ? 'live' : x.overtime_minutes > 0 && x.required_minutes ? 'ot' : x.required_minutes && x.worked_minutes < x.required_minutes * .75 ? 'low' : 'ok')
+  : x.kind === 'LEAVE' ? 'leave' : x.kind === 'WEEKEND' || x.kind === 'HOLIDAY' ? 'off' : x.date < todayKey ? 'abs' : 'fut';
+function calHeat(cal, month) {
+  const by = {}; cal.forEach(x => by[x.date] = x);
+  const todayKey = cal.length ? cal[cal.length - 1].date : '', first = new Date(month.start + 'T00:00:00'), lead = (first.getDay() + 6) % 7;
+  let cells = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(d => `<div class="hd">${d}</div>`).join('') + '<div class="cd empty"></div>'.repeat(lead);
+  for (let n = 1; n <= month.days_in_month; n++) {
+    const key = iso(new Date(first.getFullYear(), first.getMonth(), n)), x = by[key];
+    const cls = x ? dayClass(x, todayKey) : 'fut';
+    const tip = x ? `${fmtD(key)}\n${x.worked_minutes ? 'Worked ' + hm(x.worked_minutes) + (x.required_minutes ? ' of ' + hm(x.required_minutes) : '') : x.holiday || (x.kind === 'WORKDAY' ? (x.date < todayKey ? 'No attendance' : 'Not yet') : KIND[x.kind])}${x.late_minutes ? '\nLate ' + x.late_minutes + ' min' : ''}${x.overtime_minutes ? '\nOvertime ' + hm(x.overtime_minutes) : ''}` : fmtD(key);
+    cells += `<div class="cd ${cls}${key === todayKey ? ' today' : ''}" data-t="${esc(tip)}">${n}${x && x.worked_minutes ? `<small>${Math.floor(x.worked_minutes / 60)}h${x.worked_minutes % 60 ? String(x.worked_minutes % 60).padStart(2, '0') : ''}</small>` : ''}</div>`;
+  }
+  return `<div class="cal">${cells}</div><div class="leg"><span style="--c:var(--okb)">On target</span><span style="--c:var(--over)">Overtime (underlined)</span><span style="--c:var(--wab)">Under 75%</span><span style="--c:var(--erb)">Absent</span><span style="--c:var(--stb)">Leave</span><span style="--c:var(--bd)">Weekend or holiday</span></div>`;
+}
+const ST = { WORKING: ['ok', 'Working'], FINISHED: ['mu', 'Finished'], NOT_IN: ['er', 'Not in'], NOT_STARTED: ['wa', 'Not started'], ON_LEAVE: ['mu', 'On leave'], OFF: ['mu', 'Off day'] };
+const stBadge = k => `<span class="b ${ST[k][0]}">${ST[k][1]}</span>`;
+const balanceBars = l => l.length ? l.map(b => `<div style="margin:0 0 14px"><div class="row" style="justify-content:space-between;margin:0"><b>${esc(label(b.leave_type.toLowerCase()))}</b><span class="mu">${b.remaining_days} of ${b.allocated_days} days left</span></div><div class="prog"><i style="width:${Math.min(100, b.allocated_days ? b.used_days / b.allocated_days * 100 : 0)}%"></i></div></div>`).join('') : '<p class="mu">No leave days have been allocated yet.</p>';
+const reqRow = r => `<div class="grow"><b>${r.type === 'WFH' ? 'Work from home' : esc(label((r.leave_type || 'leave').toLowerCase())) + ' leave'}</b><br><span class="mu">${sd(r.start_date)}${r.end_date !== r.start_date ? ' to ' + sd(r.end_date) : ''}, ${pl(r.days, 'day')}</span></div>${bdg(r.status)}`;
+const holRows = h => list(h.map(x => { const d = new Date(x.date + 'T00:00:00'); return `<span class="dt"><b>${d.getDate()}</b>${d.toLocaleDateString([], { month: 'short' })}</span><div class="grow"><b>${esc(x.name)}</b><br><span class="mu">${esc(x.description || '')}</span></div>${x.is_paid ? '<span class="b ok">PAID</span>' : '<span class="b mu">UNPAID</span>'}`; }));
+const card = (title, body, extra) => `<div class="card"${extra || ''}><h3>${title}</h3>${body}</div>`;
+
+/* ---------- my statistics ---------- */
+function renderMine(M) {
+  const t = M.today, m = M.month.summary, p = M.month.previous, sh = M.shift, pc = t.required_minutes ? Math.min(100, Math.round(t.worked_minutes / t.required_minutes * 100)) : 0;
+  const state = t.live ? 'Working now' : t.worked_minutes ? 'Done for today' : t.kind === 'WORKDAY' ? 'Not started' : t.holiday || KIND[t.kind];
+  const today = `<div class="stats">${stat(t.live ? '' : t.worked_minutes ? '' : '', t.live ? 'ok' : '', 'Status', state, t.check_in_at ? 'in at ' + tm(t.check_in_at) : '')
+    + stat('⏱', '', 'Worked today', hm(t.worked_minutes), t.required_minutes ? pc + '% of ' + hm(t.required_minutes) : 'no hours required')
+    + stat('', t.expected_finish_at ? 'wa' : (t.required_minutes && t.worked_minutes >= t.required_minutes ? 'ok' : ''), t.expected_finish_at ? 'Required hours done at' : 'Required hours', t.expected_finish_at ? tm(t.expected_finish_at) : t.required_minutes && t.worked_minutes >= t.required_minutes ? 'Completed' : '\u2014', 'based on your shift')
+    + stat('', '', 'Work mode', t.mode ? (t.mode === 'WFH' ? 'Home' : 'Office') : '\u2014', sh ? esc(sh.name) + ' ' + sh.start_time.slice(0, 5) + '\u2013' + sh.end_time.slice(0, 5) : 'no shift assigned')}</div>`;
+  const diff = m.difference_minutes;
+  const kp = `<div class="kpis">${kpi('Total working time', hm(m.total_worked_minutes), m.days_worked + ' days worked')
+    + kpi('Daily average', hm(m.average_worked_minutes), 'per day worked', dlt(m.average_worked_minutes, p.average_worked_minutes, true, hm))
+    + kpi('Time balance', sgn(diff), 'required ' + hm(m.total_required_minutes), `<span class="dl ${diff >= 0 ? 'up' : 'dn'}">${diff >= 0 ? 'ahead' : 'behind'}</span>`)
+    + kpi('Overtime', hm(m.overtime_minutes), m.half_days ? m.half_days + ' half days' : '')
+    + rateKpi('Attendance rate', m.attendance_rate, m.present_days + ' of ' + m.working_days + ' working days', dlt(m.attendance_rate, p.attendance_rate, true, v => v + ' pts'))
+    + rateKpi('Punctuality', m.punctuality_rate, m.late_days + ' late arrival' + (m.late_days === 1 ? '' : 's'), dlt(m.punctuality_rate, p.punctuality_rate, true, v => v + ' pts'))
+    + kpi('Leave / absent', m.leave_days + ' / ' + m.absent_days, 'days this month')
+    + kpi('Work from home', m.wfh_days + ' day' + (m.wfh_days === 1 ? '' : 's'), M.wfh.limit_days != null ? 'quota ' + M.wfh.used_days + ' of ' + M.wfh.limit_days + ' approved' : '')}</div>`;
+  const comp = donut([{ l: 'Present', v: m.present_days - m.half_days, c: 'ok' }, { l: 'Half day', v: m.half_days, c: 'wa' }, { l: 'Absent', v: m.absent_days, c: 'er' }, { l: 'On leave', v: m.leave_days, c: 'pr2' }, { l: 'Needs review', v: m.incomplete_days, c: 'mu' }], m.attendance_rate == null ? '\u2014' : m.attendance_rate + '%');
+  const trend = M.trend;
+  return today + kp
+    + `<div class="two w">${card('Last 14 working days', M.last_days.length ? workChart(M.last_days) : '<p class="mu">No working days yet.</p>')}${card(M.month.label + ' at a glance', comp + `<p style="margin:14px 0 0">On-time streak: <b>${M.streak_days} day${M.streak_days === 1 ? '' : 's'}</b></p>`)}</div>`
+    + `<div class="two">${card('Calendar \u2013 ' + M.month.label, calHeat(M.calendar, M.month))}${card('Leave balance ' + new Date().getFullYear(), balanceBars(M.leave_balances) + (M.wfh.limit_days != null ? `<div style="margin:0 0 6px"><div class="row" style="justify-content:space-between;margin:0"><b>Work from home</b><span class="mu">${M.wfh.used_days} of ${M.wfh.limit_days} days used this month</span></div><div class="prog"><i style="width:${Math.min(100, M.wfh.limit_days ? M.wfh.used_days / M.wfh.limit_days * 100 : 0)}%"></i></div></div>` : '') + `<h3 style="margin:18px 0 6px">Coming up</h3>` + list(M.upcoming_requests.map(reqRow)))}</div>`
+    + `<div class="two">${card('Hours worked \u2013 last 6 months', monthBars(trend))}${card('Attendance rate \u2013 last 6 months', lineChart(trend.map(x => ({ l: x.label, v: x.attendance_rate })), 100, v => v + '%'))}</div>`
+    + `<div class="two">${card('Upcoming holidays', holRows(M.holidays))}${card('My recent requests', list(M.recent_requests.map(reqRow)))}</div>`;
+}
+
+/* ---------- team / company statistics ---------- */
+function renderTeam(box, T, extra) {
+  const adm = T.scope === 'company', t = T.today, m = T.month.summary, p = T.month.previous, hc = T.headcount, pd = T.pending;
+  const cards = `<div class="stats">${stat('', '', adm ? 'Employees' : 'Team size', t.total, adm ? pl(hc.managers, 'manager') + ', ' + pl(hc.employees, 'employee') + (hc.inactive ? ', ' + hc.inactive + ' inactive' : '') : t.expected + ' expected today')
+    + stat('', 'ok', 'Working now', t.working_now, t.finished + ' finished')
+    + stat('', t.not_in ? 'er' : '', 'Not checked in', t.not_in, t.not_started + ' not started yet')
+    + stat('', '', 'On leave today', t.on_leave, t.off ? t.off + ' on an off day' : '')
+    + stat('', '', 'Working from home', t.wfh)
+    + stat('⏰', t.late ? 'wa' : 'ok', 'Late today', t.late)}</div>`;
+  const kp = `<div class="kpis">${rateKpi('Attendance rate', m.attendance_rate, m.present_days + ' of ' + m.working_days + ' person-days', dlt(m.attendance_rate, p.attendance_rate, true, v => v + ' pts'))
+    + rateKpi('Punctuality', m.punctuality_rate, m.late_days + ' late arrivals', dlt(m.punctuality_rate, p.punctuality_rate, true, v => v + ' pts'))
+    + kpi('Average hours per day', hm(m.average_worked_minutes), 'per person who worked', dlt(m.average_worked_minutes, p.average_worked_minutes, true, hm))
+    + kpi('Total hours worked', hm(m.total_worked_minutes), 'required ' + hm(m.total_required_minutes))
+    + kpi('Overtime', hm(m.overtime_minutes), 'this month')
+    + kpi('Absent / on leave', m.absent_days + ' / ' + m.leave_days, 'person-days this month')}</div>`;
+  const chips = [['ALL', 'All', t.total], ['WORKING', 'Working', t.working_now], ['NOT_IN', 'Not in', t.not_in], ['NOT_STARTED', 'Not started', t.not_started], ['FINISHED', 'Finished', t.finished], ['ON_LEAVE', 'On leave', t.on_leave], ['OFF', 'Off day', t.off]].filter(c => c[0] === 'ALL' || c[2]);
+  const shiftBars = T.by_shift.length ? `<ul class="hb">${T.by_shift.map(s => { const sg = (n, c) => n ? `<i style="width:${n / s.total * 100}%;background:var(--${c})" title="${n}"></i>` : ''; return `<li><span><b>${esc(s.shift)}</b><br><span class="mu">${pl(s.total, 'person', 'people')}</span></span><div class="bar">${sg(s.WORKING, 'ok')}${sg(s.FINISHED, 'pr2')}${sg(s.NOT_IN, 'er')}${sg(s.NOT_STARTED, 'wa')}${sg(s.ON_LEAVE + s.OFF, 'bd')}</div><b>${s.WORKING}/${s.total}</b></li>`; }).join('')}</ul><div class="leg"><span style="--c:var(--ok)">Working</span><span style="--c:var(--pr2)">Finished</span><span style="--c:var(--er)">Not in</span><span style="--c:var(--wa)">Not started</span><span style="--c:var(--bd)">Leave / off</span></div>` : '<p class="mu">No data yet.</p>';
+  const dept = tbl(['Department', 'People', 'In today', 'Avg hours / day', 'Overtime', 'Attendance', 'Late'], T.by_department.map(d => [esc(d.department), d.headcount, d.present_today, hm(d.average_worked_minutes), hm(d.overtime_minutes), pctTxt(d.attendance_rate), d.late_days]));
+  const lead = (rows, f) => list(rows.map(r => `<div class="grow"><b>${esc(r.name)}</b></div><b>${f(r)}</b>`));
+  const attention = list([
+    ...(pd.auto_closed ? [`<div class="grow"><b>${pd.auto_closed} auto-closed record${pd.auto_closed === 1 ? '' : 's'}</b><br><span class="mu">waiting for review</span></div><button class="lk" onclick="location.hash='autoclosed'">Review</button>`] : []),
+    ...(pd.leave ? [`<div class="grow"><b>${pd.leave} leave request${pd.leave === 1 ? '' : 's'}</b><br><span class="mu">waiting for your decision</span></div><button class="lk" onclick="location.hash='approvals'">Review</button>`] : []),
+    ...(pd.wfh ? [`<div class="grow"><b>${pd.wfh} work-from-home request${pd.wfh === 1 ? '' : 's'}</b><br><span class="mu">waiting for your decision</span></div><button class="lk" onclick="location.hash='wfhapprovals'">Review</button>`] : []),
+    ...(pd.conflicts ? [`<div class="grow"><b>${pd.conflicts} open attendance conflict${pd.conflicts === 1 ? '' : 's'}</b></div><button class="lk" onclick="location.hash='conflicts'">Review</button>`] : [])]);
+  const off = list(T.upcoming_leave.map(r => `<div class="grow"><b>${esc(r.employee)}</b><br><span class="mu">${sd(r.start_date)}${r.end_date !== r.start_date ? ' to ' + sd(r.end_date) : ''}</span></div><span class="b mu">${pl(r.days, 'day')}</span>`));
+  const people = card('Who is in right now', `<div class="row" style="margin-top:0"><div class="chips" id="pchips">${chips.map(c => `<button class="chip${c[0] === 'ALL' ? ' on' : ''}" data-s="${c[0]}">${c[1]} ${c[2]}</button>`).join('')}</div><input class="srch" id="psearch" placeholder="Search name or department"></div><div id="ptable"></div>`);
+  box.innerHTML = cards + people
+    + `<div class="two">${card('Shifts right now', shiftBars)}${card('Team attendance \u2013 last 14 working days', T.daily.length ? teamBars(T.daily, t.total) : '<p class="mu">No data yet.</p>')}</div>`
+    + `<h4 class="sh4">${esc(T.month.label)} \u2013 ${adm ? 'company' : 'team'} statistics</h4>` + kp
+    + `<div class="two">${card('Attendance rate \u2013 last 6 months', lineChart(T.trend.map(x => ({ l: x.label, v: x.attendance_rate })), 100, v => v + '%'))}${card('Average hours per day \u2013 last 6 months', lineChart(T.trend.map(x => ({ l: x.label, v: x.present_days ? +(x.average_worked_minutes / 60).toFixed(1) : null })), Math.max(10, ...T.trend.map(x => x.average_worked_minutes / 60)), v => v + 'h'))}</div>`
+    + card('By department', dept)
+    + `<div class="two">${card('Most overtime', T.leaders.overtime.length ? lead(T.leaders.overtime, r => hm(r.minutes)) : '<p class="mu">No overtime this month.</p>')}${card('Most late arrivals', T.leaders.late.length ? lead(T.leaders.late, r => r.days + ' day' + (r.days === 1 ? '' : 's')) : '<p class="mu">No late arrivals this month.</p>')}${card('Lowest attendance', T.leaders.low_attendance.length ? lead(T.leaders.low_attendance, r => r.rate + '%') : '<p class="mu">Everyone is at 100%.</p>')}</div>`
+    + `<div class="two">${card('Needs your attention', attention.includes('Nothing here') ? '<p class="mu">Nothing is waiting for you.</p>' : attention)}${card('Who is off in the next 14 days', off)}</div>`
+    + `<div class="two">${card('Upcoming holidays', holRows(T.holidays))}${adm ? card('People by department', donut(hc.by_department.map((d, i) => ({ l: d.name, v: d.count, c: PAL[i % PAL.length] })), hc.total)) : card('Team members', `<p class="mu" style="margin:0">${hc.managers} manager${hc.managers === 1 ? '' : 's'}, ${hc.employees} employee${hc.employees === 1 ? '' : 's'} report to you.</p>`)}</div>`
+    + (extra ? card('Recent activity', list((extra.aud || []).map(a => `<div class="grow"><b>${esc(label(a.action.toLowerCase()))}</b><br><span class="mu">${new Date(a.created_at).toLocaleString()}</span></div>`))) : '');
+  // who-is-in table with filter chips and search
+  let f = 'ALL', q = '';
+  const order = { WORKING: 0, NOT_IN: 1, NOT_STARTED: 2, FINISHED: 3, ON_LEAVE: 4, OFF: 5 };
+  const draw = () => {
+    const rows = T.people.filter(x => (f === 'ALL' || x.status === f) && (!q || (x.name + ' ' + (x.department || '')).toLowerCase().includes(q))).sort((a, b) => order[a.status] - order[b.status] || a.name.localeCompare(b.name));
+    $('#ptable').innerHTML = tbl(['Name', 'Department', 'Shift', 'Status', 'Mode', 'In', 'Worked', 'Late'], rows.map(x => [esc(x.name), esc(x.department || '\u2014'), esc(x.shift || '\u2014'), stBadge(x.status), x.mode ? (x.mode === 'WFH' ? 'Home' : 'Office') : '\u2014', x.check_in_at ? tm(x.check_in_at) : '\u2014',
+      x.worked_minutes ? `<div class="prog mini"><i style="width:${x.required_minutes ? Math.min(100, x.worked_minutes / x.required_minutes * 100) : 100}%"></i></div>${hm(x.worked_minutes)}` : '\u2014', x.late_minutes ? x.late_minutes + ' min' : '\u2014']));
+  };
+  box.querySelectorAll('#pchips .chip').forEach(c => c.onclick = () => { f = c.dataset.s; box.querySelectorAll('#pchips .chip').forEach(o => o.classList.toggle('on', o === c)); draw(); });
+  $('#psearch').oninput = e => { q = e.target.value.trim().toLowerCase(); draw(); };
+  draw();
+}
+
+function home(el) {
+  const staff = me.role !== 'SUPER_ADMIN', lead = me.role !== 'EMPLOYEE', adm = isAdmin();
+  const h = new Date().getHours(), greet = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  const roleLabel = ROLE[me.role];
+  el.innerHTML = `<div class="head"><div><h2>${greet}, ${esc(me.first_name)}</h2><p>${roleLabel}${me.department ? ' in ' + esc(me.department) : ''}</p></div><div class="plate"><small>Time worked today</small><div class="timer" id="tm">--:--:--</div><div class="row"><button class="btn amber" id="ci">Check in</button><button class="btn ghost" id="co">Check out</button></div></div></div>
+  <div id="warn"></div><div id="ot"></div>
+  ${lead ? `<h4 class="sh4">${adm ? 'Company overview' : 'My team'}</h4><div id="teamsec"><div class="stats">${skel(6)}</div></div>` : ''}
+  ${staff ? `<h4 class="sh4">My statistics</h4><div id="mysec"><div class="stats">${skel(4)}</div></div>` : ''}`;
+  const loadPunch = safe(async () => {
+    const [today, ot] = await Promise.all([g2('/attendance/today'), g2('/overtime/status')]);
+    const rec = today && today.record, open = today && today.open_session;
+    const stale = !!(open && open.work_date !== today.work_date);   // left open from an earlier day
+    renderOT(stale ? null : ot, load);
+    $('#warn').innerHTML = stale ? `<div class="card" style="border-color:var(--wa);background:var(--wab);color:var(--wa)"><b>You forgot to check out on ${esc(open.work_date)} (checked in at ${tm(open.check_in_at)}).</b> You can check in now: that old session is closed automatically at the end of your shift and your manager is asked to review it. No overtime is counted for it until an admin confirms or corrects the times.</div>` : '';
+    const base = ((rec && rec.sessions) || []).filter(x => x.check_out_at).reduce((a, x) => a + x.worked_minutes, 0) * 60;
+    clearInterval(tick);
+    const paint = () => { const sec = Math.floor(base + (open && !stale ? Math.max(0, Date.now() - new Date(open.check_in_at)) / 1000 : 0)); const e = $('#tm'); if (e) e.textContent = [sec / 3600, sec / 60 % 60, sec % 60].map(v => String(Math.floor(v)).padStart(2, '0')).join(':'); };
+    paint(); if (open && !stale) tick = setInterval(paint, 1000);
+    $('#ci').disabled = !!open && !stale; $('#co').disabled = !open || stale;
+  });
+  const loadTeam = safe(async () => {
+    const [T, aud] = await Promise.all([api('/dashboard/team'), adm ? g2('/admin/audit-logs?limit=6') : null]);
+    const box = $('#teamsec'); if (box) renderTeam(box, T, adm ? { aud } : null);
+  });
+  const loadMine = safe(async () => { const M = await api('/dashboard/me'); const box = $('#mysec'); if (box) box.innerHTML = renderMine(M); });
+  const load = () => { loadPunch(); if (lead) loadTeam(); if (staff) loadMine(); };
+  const go = (p, b) => b.onclick = safe(async () => { b.disabled = true; try { const r = await api(p, { method: 'POST' }); toast(r.message + (r.previous_session_closed ? '. Your earlier unfinished session was closed automatically and flagged for review.' : '')); } catch (e) { b.disabled = false; throw e; } load(); });
+  go('/attendance/check-in', $('#ci')); go('/attendance/check-out', $('#co'));
+  load();
+  auto = setInterval(() => { if (!document.querySelector('.ov')) load(); }, 60000);   // live refresh
+}
+
+/* ---------- Leaves (employee / manager) ---------- */
+const LT = ['PAID', 'UNPAID', 'SICK', 'CASUAL', 'EARNED'];
+const leaveFields = (v = {}) => [
+  { n: 'leave_type', l: 'Leave type', t: 'select', o: LT, v: v.leave_type || 'PAID' },
+  { n: 'start_date', l: 'Start date', t: 'date', r: 1, v: v.start_date },
+  { n: 'end_date', l: 'End date', t: 'date', r: 1, v: v.end_date },
+  { n: 'half_day', l: '', t: 'check', h: 'Half day (single date only)', v: v.duration_days !== undefined && Number(v.duration_days) < 1 },
+  { n: 'reason', l: 'Reason', t: 'area', r: 1, v: v.reason }];
+const lb = v => ({ ...v, half_day: v.half_day === 'true' });
+function leaves(el) {
+  const fs = leaveFields();
+  el.innerHTML = `<div class="card"><h3>Apply for leave</h3>${formHTML(fs, 'Submit request')}</div><div class="card"><h3>My leave balance (${new Date().getFullYear()})</h3><div id="bal"></div></div><div class="card"><h3>My requests</h3><div id="list"></div></div>`;
+  safe(async () => { const b = await api('/leaves/my-balances'); $('#bal').innerHTML = tbl(['Type', 'Allocated', 'Used', 'Remaining'], b.map(x => [x.leave_type, x.allocated_days, x.used_days, `<b>${x.remaining_days}</b>`])); })();
+  bind(el, fs, async v => { await api('/leaves/', { method: 'POST', json: lb(v) }); toast('Leave request submitted'); load(); });
+  const load = safe(async () => {
+    const d = await api('/leaves/my-requests'), L = $('#list');
+    L.innerHTML = tbl(['ID', 'Type', 'From', 'To', 'Days', 'Status', 'Comment', ''], d.map(r => [r.id, r.leave_type, r.start_date, r.end_date, r.duration_days, bdg(r.status), esc(r.reviewer_comment || '—'),
+      `<button class="lk" data-a="v" data-id="${r.id}">View</button>` + (r.status === 'PENDING' ? `<button class="lk" data-a="e" data-id="${r.id}">Edit</button><button class="lk dg" data-a="w" data-id="${r.id}">Withdraw</button>` : '') + (r.status === 'APPROVED' && r.start_date > new Date().toISOString().slice(0, 10) ? `<button class="lk dg" data-a="c" data-id="${r.id}">Cancel</button>` : '')]));
+    L.onclick = safe(async e => {
+      const b = e.target.closest('button[data-a]'); if (!b) return;
+      const id = b.dataset.id, p = '/leaves/my-requests/' + id;
+      if (b.dataset.a === 'c') { if (confirm('Cancel this approved leave? Your balance will be restored.')) { await api(p + '/cancel', { method: 'POST' }); toast('Leave cancelled'); load(); } return; }
+      const r = await api(p);
+      if (b.dataset.a === 'v') modal('Leave request #' + id, kv(r));
+      else if (b.dataset.a === 'w') { if (confirm('Withdraw this request?')) { await api(p, { method: 'DELETE' }); toast('Request withdrawn'); load(); } }
+      else { const f2 = leaveFields(r), m = modal('Edit request #' + id, formHTML(f2, 'Save changes')); bind(m, f2, async v => { await api(p, { method: 'PUT', json: lb(v) }); m.remove(); toast('Request updated'); load(); }); }
+    });
+  });
+  load();
+}
+
+/* ---------- Approvals (manager) ---------- */
+function approvals(el) {
+  el.innerHTML = `<div class="card"><h3>${isAdmin() ? 'Leave requests from managers' : 'Pending leave requests'}</h3><div id="list"></div></div>`;
+  const load = safe(async () => {
+    const d = await api('/leaves/manager/pending'), L = $('#list');
+    L.innerHTML = tbl(['ID', 'Employee', 'Type', 'From', 'To', 'Days', 'Reason', ''], d.map(r => [r.id, '#' + r.employee_id, r.leave_type, r.start_date, r.end_date, r.duration_days, esc(r.reason),
+      `<button class="lk" data-a="v" data-id="${r.id}">View</button><button class="lk" data-a="approve" data-id="${r.id}">Approve</button><button class="lk dg" data-a="reject" data-id="${r.id}">Reject</button>`]));
+    L.onclick = safe(async e => {
+      const b = e.target.closest('button[data-a]'); if (!b) return;
+      const id = b.dataset.id, a = b.dataset.a;
+      if (a === 'v') return modal('Request #' + id, kv(await api('/leaves/manager/requests/' + id)));
+      const fs = [{ n: 'comment', l: 'Comment (optional)', t: 'area' }];
+      const m = modal((a === 'approve' ? 'Approve' : 'Reject') + ' request #' + id, formHTML(fs, a === 'approve' ? 'Approve' : 'Reject'));
+      bind(m, fs, async v => { await api(`/leaves/manager/requests/${id}/${a}`, { method: 'POST', json: { comment: v.comment || null } }); m.remove(); toast('Request ' + a + 'd'); load(); });
+    });
+  });
+  load();
+}
+
+/* ---------- Holidays ---------- */
+const holFields = (v = {}) => [
+  { n: 'name', l: 'Name', r: 1, v: v.name }, { n: 'holiday_date', l: 'Date', t: 'date', r: 1, v: v.holiday_date },
+  { n: 'is_paid', l: 'Paid holiday', t: 'select', o: [['true', 'Yes'], ['false', 'No']], v: String(v.is_paid ?? true) },
+  { n: 'description', l: 'Description', t: 'area', r: 1, v: v.description }];
+function holidays(el) {
+  const fs = holFields();
+  el.innerHTML = (isAdmin() ? `<div class="card"><h3>Add holiday</h3>${formHTML(fs, 'Add holiday')}</div>` : '') + `<div class="card"><h3>Company holidays</h3><div id="list"></div></div>`;
+  if (isAdmin()) bind(el, fs, async v => { await api('/holidays/', { method: 'POST', form: v }); toast('Holiday added'); load(); });
+  const load = safe(async () => {
+    const d = await api('/holidays/'), L = $('#list');
+    L.innerHTML = tbl(['Date', 'Name', 'Paid', 'Description', ''], d.map(h => [h.holiday_date, esc(h.name), yn(h.is_paid), esc(h.description || '—'),
+      isAdmin() ? `<button class="lk" data-a="e" data-id="${h.id}">Edit</button><button class="lk dg" data-a="d" data-id="${h.id}">Delete</button>` : '']));
+    L.onclick = safe(async e => {
+      const b = e.target.closest('button[data-a]'); if (!b) return;
+      const id = b.dataset.id;
+      if (b.dataset.a === 'd') { if (confirm('Delete this holiday?')) { await api('/holidays/' + id, { method: 'DELETE' }); toast('Holiday deleted'); load(); } return; }
+      const h = await api('/holidays/' + id), f2 = holFields(h), m = modal('Edit holiday', formHTML(f2, 'Save changes'));
+      bind(m, f2, async v => { await api('/holidays/' + id, { method: 'PUT', form: v }); m.remove(); toast('Holiday updated'); load(); });
+    });
+  });
+  load();
+}
+
+/* ---------- Shifts ---------- */
+const shiftFields = (v = {}) => [
+  { n: 'name', l: 'Shift name', r: 1, v: v.name }, { n: 'start_time', l: 'Start time', t: 'time', r: 1, v: (v.start_time || '').slice(0, 5) },
+  { n: 'end_time', l: 'End time', t: 'time', r: 1, v: (v.end_time || '').slice(0, 5) },
+  { n: 'required_work_minutes', l: 'Required work (minutes)', t: 'number', r: 1, v: v.required_work_minutes ?? 480 },
+  { n: 'is_overnight', l: 'Overnight shift', t: 'select', o: [['false', 'No'], ['true', 'Yes']], v: String(v.is_overnight ?? false) }];
+function shifts(el) {
+  const fs = shiftFields();
+  el.innerHTML = (isAdmin() ? `<div class="card"><h3>Add shift</h3>${formHTML(fs, 'Add shift')}</div>` : '') +
+    `<div class="card"><h3>Shifts</h3><div class="row"><div class="fld"><label>Show</label><select id="flt"><option value="">All shifts</option><option value="active">Active only</option></select></div></div><div id="list"></div></div>`;
+  if (isAdmin()) bind(el, fs, async v => { await api('/shifts/', { method: 'POST', form: v }); toast('Shift added'); load(); });
+  $('#flt').onchange = () => load();
+  const load = safe(async () => {
+    const d = await api('/shifts/' + $('#flt').value), L = $('#list');
+    L.innerHTML = tbl(['Name', 'Start', 'End', 'Required min', 'Overnight', 'Status', ''], d.map(s => [esc(s.name), s.start_time.slice(0, 5), s.end_time.slice(0, 5), s.required_work_minutes, yn(s.is_overnight), bdg(s.is_active ? 'ACTIVE' : 'INACTIVE').replace('mu', s.is_active ? 'ok' : 'mu'),
+      isAdmin() ? `<button class="lk" data-a="e" data-id="${s.id}">Edit</button><button class="lk${s.is_active ? ' dg' : ''}" data-a="${s.is_active ? 'deactivate' : 'activate'}" data-id="${s.id}">${s.is_active ? 'Deactivate' : 'Activate'}</button>` : '']));
+    L.onclick = safe(async e => {
+      const b = e.target.closest('button[data-a]'); if (!b) return;
+      const id = b.dataset.id, a = b.dataset.a;
+      if (a !== 'e') { await api(`/shifts/${id}/${a}`, { method: 'PATCH' }); toast('Shift ' + a + 'd'); return load(); }
+      const s = await api('/shifts/' + id), f2 = shiftFields(s), m = modal('Edit shift', formHTML(f2, 'Save changes'));
+      bind(m, f2, async v => { await api('/shifts/' + id, { method: 'PUT', form: v }); m.remove(); toast('Shift updated'); load(); });
+    });
+  });
+  load();
+}
+
+/* ---------- Employees (super admin) ---------- */
+const DEPTS = ['Software Development', 'Quality Assurance', 'DevOps and Cloud Engineering', 'Data and AI', 'IT Support', 'Human Resources', 'Project Management', 'Sales and Marketing', 'Finance and Accounts', 'UI/UX and Product Design'];
+const activeShiftOptions = async () => (await api('/shifts/active')).map(s => [s.name, `${s.name} (${s.start_time.slice(0,5)}–${s.end_time.slice(0,5)})`]);
+function employees(el) {
+  const cf = [
+    { n: 'employee_code', l: 'Employee code', r: 1 }, { n: 'first_name', l: 'First name', r: 1 }, { n: 'last_name', l: 'Last name', r: 1 },
+    { n: 'email', l: 'Email (@gmail.com)', t: 'email', r: 1 }, { n: 'password', l: 'Password (8+ chars)', t: 'password', r: 1 },
+    { n: 'role', l: 'Role', t: 'select', o: ['EMPLOYEE', 'MANAGER'] }, { n: 'department', l: 'Department', t: 'select', o: DEPTS },
+    { n: 'job_title', l: 'Job title' }, { n: 'shift_name', l: 'Shift', t: 'select', o: [['', '— select active shift —']] }, { n: 'manager_id', l: 'Manager ID (optional)', t: 'number' }];
+  el.innerHTML = `<div class="card"><h3>All employees</h3><div class="row"><div class="fld"><input id="q" placeholder="Search name, email or code"></div><button class="btn sec" id="sq">Search</button></div><div id="elist"></div></div>
+  <div class="card"><h3>Create employee</h3>${formHTML(cf, 'Create employee')}</div>
+  <div class="card"><h3>Find &amp; update employee</h3><div class="row"><div class="fld"><label>Employee ID</label><input id="eid" type="number" min="1"></div><button class="btn sec" id="find">Find</button></div><div id="emp"></div></div>`;
+  const cform = el.querySelector('form');
+  const shiftSelect = cform.elements.shift_name;
+  const createButton = cform.querySelector('button');
+  createButton.disabled = true;
+  safe(async () => {
+    const options = await activeShiftOptions();
+    shiftSelect.innerHTML = '<option value="">— select active shift —</option>' + options.map(([v,l]) => `<option value="${esc(v)}">${esc(l)}</option>`).join('');
+    shiftSelect.required = true;
+    createButton.disabled = !options.length;
+    if (!options.length) toast('Create an active shift before adding employees.', 1);
+  })();
+  const loadList = safe(async () => {
+    const d = await api('/admin/employees?q=' + encodeURIComponent($('#q').value)), L = $('#elist');
+    L.innerHTML = tbl(['ID', 'Code', 'Name', 'Email', 'Role', 'Department', 'Manager', 'Status', ''], d.map(e => [e.id, esc(e.employee_code), esc(e.first_name + ' ' + e.last_name), esc(e.email), e.role, esc(e.department || '—'), e.manager_id ?? '—', bdg(e.is_active ? 'ACTIVE' : 'INACTIVE').replace('mu', e.is_active ? 'ok' : 'er'), `<button class="lk" data-id="${e.id}">Manage</button>`]));
+    L.onclick = e => { const b = e.target.closest('button[data-id]'); if (b) { $('#eid').value = b.dataset.id; $('#find').click(); $('#emp').scrollIntoView({ behavior: 'smooth' }); } };
+  });
+  $('#sq').onclick = loadList; $('#q').onkeydown = e => { if (e.key === 'Enter') loadList(); }; loadList();
+  bind(el, cf, async v => {
+    if (!v.manager_id) delete v.manager_id;
+    const d = await api('/admin/employees', { method: 'POST', form: v });
+    toast(d.message); cform.reset(); $('#emp').innerHTML = kv(d.employee); loadList();
+  });
+  $('#find').onclick = safe(async () => {
+    const id = $('#eid').value; if (!id) return toast('Enter an employee ID', 1);
+    const e = await api('/admin/employees/' + id), options = await activeShiftOptions(), box = $('#emp');
+    if (!box) return;
+    const uf = [
+      { n: 'first_name', l: 'First name', v: '' }, { n: 'last_name', l: 'Last name', v: '' },
+      { n: 'role', l: 'Role', t: 'select', o: ['', 'MANAGER', 'EMPLOYEE'] }, { n: 'department', l: 'Department', t: 'select', o: ['', ...DEPTS] },
+      { n: 'job_title', l: 'Job title' }, { n: 'shift_name', l: 'Shift', t: 'select', o: ['', ...options] }, { n: 'manager_id', l: 'Manager ID', t: 'number' },
+      { n: 'is_active', l: 'Account status', t: 'select', o: [['', '— keep current —'], ['true', 'Active'], ['false', 'Inactive']] }];
+    box.innerHTML = kv(e) + `<div class="row"><button class="btn sec" id="rp">Reset password</button><button class="btn sec" id="ea">Change email / code</button><button class="btn sec" id="del" style="color:var(--er);border-color:var(--er)">Delete employee</button></div><h3 style="margin-top:18px">Update (leave blank to keep current value)</h3>` + formHTML(uf, 'Update employee');
+    const tool = (btn, title, fs, label, fn) => $(btn).onclick = () => { const m = modal(title, formHTML(fs, label)); bind(m, fs, async v => { await fn(v); m.remove(); }); };
+    tool('#rp', 'Reset password', [{ n: 'new_password', l: 'New password (8+ chars)', t: 'password', r: 1 }], 'Reset password',
+      async v => { const d = await api(`/admin/employees/${id}/reset-password`, { method: 'POST', json: v }); toast(d.message); });
+    tool('#ea', 'Change email / employee code', [{ n: 'email', l: 'New email (blank = keep)', t: 'email', v: e.email }, { n: 'employee_code', l: 'Employee code', v: e.employee_code }], 'Save',
+      async v => { const d = await api(`/admin/employees/${id}/account`, { method: 'PATCH', json: v }); toast(d.message); $('#find').click(); loadList(); });
+    $('#del').onclick = safe(async () => {
+      if (!confirm(`Permanently delete ${e.first_name} ${e.last_name} and all their records?\nDeactivating is usually safer.`)) return;
+      const d = await api('/admin/employees/' + id, { method: 'DELETE' }); toast(d.message); box.innerHTML = ''; loadList();
+    });
+    bind(box, uf, async v => {
+      Object.keys(v).forEach(k => { if (v[k] === '') delete v[k]; });
+      const d = await api('/admin/employees/' + id, { method: 'PUT', form: v });
+      toast(d.message); $('#find').click(); loadList();
+    });
+  });
+}
+
+/* ---------- Company settings (super admin) ---------- */
+function settings(el) {
+  const nums = [['late_grace_minutes', 'Late grace (min)'], ['full_day_minutes', 'Full day (min)'], ['half_day_minutes', 'Half day (min)'], ['short_hours_minutes', 'Short hours (min)'],
+    ['annual_paid_leave_days', 'Annual paid leave days'], ['monthly_paid_leave_days', 'Monthly paid leave days'], ['wfh_advance_notice_hours', 'WFH notice (hours)'], ['wfh_monthly_limit_days', 'WFH monthly limit (days)']];
+  const chks = [['require_check_out', 'Require check-out'], ['allow_overtime', 'Allow overtime'], ['leave_approval_required', 'Leave needs approval'], ['allow_half_day_leave', 'Allow half-day leave'],
+    ['allow_leave_cancellation', 'Allow leave cancellation'], ['wfh_enabled', 'WFH enabled'], ['wfh_approval_required', 'WFH needs approval']];
+  const defs = { company_name: 'My Company', timezone: 'Asia/Kolkata', late_grace_minutes: 0, full_day_minutes: 480, half_day_minutes: 240, short_hours_minutes: 360, annual_paid_leave_days: 24, monthly_paid_leave_days: 2, wfh_advance_notice_hours: 24, wfh_monthly_limit_days: 8 };
+  chks.forEach(c => defs[c[0]] = true);
+  const build = v => [{ n: 'company_name', l: 'Company name', r: 1, v: v.company_name }, { n: 'timezone', l: 'Timezone (e.g. Asia/Kolkata)', r: 1, v: v.timezone },
+    ...nums.map(([n, l]) => ({ n, l, t: 'number', s: n.startsWith('monthly') ? '0.5' : '1', r: 1, v: v[n] })), ...chks.map(([n, l]) => ({ n, l: '', t: 'check', h: l, v: v[n] }))];
+  safe(async () => {
+    let cur = null, exists = true;
+    try { cur = await api('/company-settings/'); } catch (e) { if (!/not found/i.test(e.message)) throw e; exists = false; }
+    const fs = build(cur || defs);
+    el.innerHTML = `<div class="card"><h3>Company settings</h3>${exists ? '' : '<p class="mu">No settings exist yet. Review the defaults and create them.</p>'}${formHTML(fs, exists ? 'Save settings' : 'Create settings')}</div><div id="otset"></div>`;
+    bind(el, fs, async v => { await api('/company-settings/', { method: exists ? 'PUT' : 'POST', form: v }); toast(exists ? 'Settings saved' : 'Settings created'); settings(el); });
+    overtimeSettings($('#otset'));
+  })();
+}
+
+/* ---------- Password ---------- */
+function password(el) {
+  const fs = [{ n: 'current_password', l: 'Current password', t: 'password', r: 1 }, { n: 'new_password', l: 'New password (8+ chars)', t: 'password', r: 1 }, { n: 'confirm', l: 'Confirm new password', t: 'password', r: 1 }];
+  el.innerHTML = `<div class="card"><h3>Change password</h3>${formHTML(fs, 'Update password')}</div>`;
+  bind(el, fs, async v => {
+    if (v.new_password !== v.confirm) throw new Error('New passwords do not match');
+    const d = await api('/password/change-password', { method: 'POST', json: { current_password: v.current_password, new_password: v.new_password } });
+    toast(d.message); el.querySelector('form').reset();
+  });
+}
+
+
+/* ---------- Attendance history ---------- */
+const tm = v => v ? new Date(v).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—';
+const mins = m => m ? Math.floor(m / 60) + 'h ' + (m % 60) + 'm' : '—';
+function attendance(el) {
+  el.innerHTML = `<div class="card"><h3>My attendance (last 30 days)</h3><div id="list"></div></div><div class="card"><h3>Daily results (finalized)</h3><div id="dy"></div></div><div class="card"><h3>My attendance conflicts</h3><div id="cf"></div></div>`;
+  safe(async () => {
+    const d = await api('/attendance/my-records');
+    $('#list').innerHTML = tbl(['Date', 'Mode', 'Status', 'In', 'Out', 'Worked', 'Late', 'Overtime', 'Sessions'], d.map(r => [r.work_date, r.work_mode, bdg(r.status), tm(r.check_in_at), tm(r.check_out_at), mins(r.worked_minutes), mins(r.late_minutes), mins(r.overtime_minutes), r.sessions.length]));
+    const dy = await api('/attendance/my-daily');
+    $('#dy').innerHTML = tbl(['Date', 'Result', 'Worked', 'Required', 'Late', 'Early exit', 'Overtime', 'Notes'], dy.map(r => [r.work_date, bdg(r.status), mins(r.worked_minutes), mins(r.required_work_minutes), mins(r.late_minutes), mins(r.early_checkout_minutes), mins(r.overtime_minutes), esc(r.notes || '—')]));
+    const c = await api('/conflicts/my');
+    $('#cf').innerHTML = tbl(['ID', 'Type', 'Status', 'Description', 'Resolution'], c.map(x => [x.id, label(x.conflict_type), bdg(x.status), esc(x.description), esc(x.resolution_reason || '—')]));
+  })();
+}
+function team(el) {
+  el.innerHTML = `<div class="card"><h3>${isAdmin() ? 'Company' : 'Team'} attendance</h3><div class="row"><div class="fld"><label>Date</label><input type="date" id="dt"></div></div><div id="list"></div></div>`;
+  const load = safe(async () => {
+    const q = $('#dt').value, d = await api('/attendance/team' + (q ? '?work_date=' + q : ''));
+    $('#dt').value = d.work_date;
+    $('#list').innerHTML = tbl(['ID', 'Name', 'Role', 'Status', 'Mode', 'In', 'Out', 'Worked', 'Late'], d.rows.map(r => [r.employee_id, esc(r.name), r.role, bdg(r.status), r.work_mode || '—', tm(r.check_in_at), tm(r.check_out_at), mins(r.worked_minutes), mins(r.late_minutes)]));
+  });
+  $('#dt').onchange = load; load();
+}
+
+/* ---------- Work from home ---------- */
+function wfh(el) {
+  const fs = [{ n: 'start_date', l: 'Start date', t: 'date', r: 1 }, { n: 'end_date', l: 'End date', t: 'date', r: 1 }, { n: 'reason', l: 'Reason', t: 'area', r: 1 }];
+  el.innerHTML = `<div class="card"><h3>Request work from home</h3>${formHTML(fs, 'Submit request')}</div><div class="card"><h3>My WFH requests</h3><div id="list"></div></div>`;
+  bind(el, fs, async v => { await api('/wfh/', { method: 'POST', json: v }); toast('WFH request submitted'); load(); });
+  const load = safe(async () => {
+    const d = await api('/wfh/my-requests'), L = $('#list');
+    L.innerHTML = tbl(['ID', 'From', 'To', 'Days', 'Status', 'Comment', ''], d.map(r => [r.id, r.start_date, r.end_date, r.duration_days, bdg(r.status), esc(r.reviewer_comment || '—'),
+      ['PENDING', 'APPROVED'].includes(r.status) ? `<button class="lk dg" data-id="${r.id}">Cancel</button>` : '']));
+    L.onclick = safe(async e => { const b = e.target.closest('button[data-id]'); if (b && confirm('Cancel this request?')) { await api('/wfh/my-requests/' + b.dataset.id, { method: 'DELETE' }); toast('Request cancelled'); load(); } });
+  });
+  load();
+}
+function wfhapprovals(el) {
+  el.innerHTML = `<div class="card"><h3>Pending WFH requests</h3><div id="list"></div></div>`;
+  const load = safe(async () => {
+    const d = await api('/wfh/manager/pending'), L = $('#list');
+    L.innerHTML = tbl(['ID', 'Employee', 'From', 'To', 'Days', 'Reason', ''], d.map(r => [r.id, '#' + r.employee_id, r.start_date, r.end_date, r.duration_days, esc(r.reason),
+      `<button class="lk" data-a="approve" data-id="${r.id}">Approve</button><button class="lk dg" data-a="reject" data-id="${r.id}">Reject</button>`]));
+    L.onclick = safe(async e => {
+      const b = e.target.closest('button[data-a]'); if (!b) return;
+      const id = b.dataset.id, a = b.dataset.a, fs = [{ n: 'comment', l: 'Comment (optional)', t: 'area' }];
+      const m = modal(label(a) + ' WFH request #' + id, formHTML(fs, label(a)));
+      bind(m, fs, async v => { await api(`/wfh/manager/requests/${id}/${a}`, { method: 'POST', json: { comment: v.comment || null } }); m.remove(); toast('Request ' + a + 'd'); load(); });
+    });
+  });
+  load();
+}
+
+/* ---------- Conflicts ---------- */
+function conflicts(el) {
+  el.innerHTML = `<div class="card"><h3>Attendance conflicts</h3><div class="row"><div class="fld"><label>Status</label><select id="st"><option value="">All</option><option>OPEN</option><option>UNDER_REVIEW</option><option>RESOLVED</option><option>DISMISSED</option></select></div></div><div id="list"></div></div>`;
+  const load = safe(async () => {
+    const d = await api('/conflicts/' + ($('#st').value ? '?status=' + $('#st').value : '')), L = $('#list');
+    L.innerHTML = tbl(['ID', 'Employee', 'Type', 'Status', 'Description', 'Resolution', ''], d.map(c => [c.id, '#' + c.employee_id, label(c.conflict_type), bdg(c.status), esc(c.description), esc(c.resolution_reason || '—'),
+      ['OPEN', 'UNDER_REVIEW'].includes(c.status) ? `<button class="lk" data-id="${c.id}">Review</button>` : '']));
+    L.onclick = e => {
+      const b = e.target.closest('button[data-id]'); if (!b) return;
+      const id = b.dataset.id, fs = [{ n: 'status', l: 'Decision', t: 'select', o: ['UNDER_REVIEW', 'RESOLVED', 'DISMISSED'] }, { n: 'reason', l: 'Reason (required to resolve or dismiss)', t: 'area' }];
+      const m = modal('Review conflict #' + id, formHTML(fs, 'Save decision'));
+      bind(m, fs, async v => { await api(`/conflicts/${id}/resolve`, { method: 'POST', json: { status: v.status, reason: v.reason || null } }); m.remove(); toast('Conflict updated'); load(); });
+    };
+  });
+  $('#st').onchange = load; load();
+}
+
+/* ---------- Leave balances & audit log (super admin) ---------- */
+function balances(el) {
+  const yr = new Date().getFullYear();
+  const fs = [{ n: 'employee_id', l: 'Employee ID', t: 'number', r: 1 }, { n: 'leave_type', l: 'Leave type', t: 'select', o: ['PAID', 'SICK', 'CASUAL', 'EARNED'] },
+    { n: 'year', l: 'Year', t: 'number', r: 1, v: yr }, { n: 'allocated_days', l: 'Allocated days', t: 'number', s: '0.5', r: 1 }];
+  el.innerHTML = `<div class="card"><h3>Set leave allocation</h3><p class="mu">Creates or updates the balance. Employees need an allocation before a manager can approve their leave.</p>${formHTML(fs, 'Save allocation')}</div><div class="card"><h3>View balances</h3><div id="list"><p class="mu">Saving an allocation shows that employee's balances here.</p></div></div>`;
+  bind(el, fs, async v => {
+    await api('/admin/leave-balances', { method: 'PUT', json: { employee_id: +v.employee_id, leave_type: v.leave_type, year: +v.year, allocated_days: +v.allocated_days } });
+    toast('Allocation saved');
+    const d = await api('/admin/leave-balances?employee_id=' + v.employee_id);
+    $('#list').innerHTML = `<p class="mu">Employee #${esc(v.employee_id)}</p>` + tbl(['Year', 'Type', 'Allocated', 'Used', 'Remaining'], d.map(b => [b.year, b.leave_type, b.allocated_days, b.used_days, b.remaining_days]));
+  });
+}
+function audit(el) {
+  el.innerHTML = `<div class="card"><h3>Audit log (latest 100)</h3><div id="list"></div></div>`;
+  safe(async () => {
+    const d = await api('/admin/audit-logs');
+    $('#list').innerHTML = tbl(['When', 'Actor', 'Action', 'Entity', 'Old', 'New', 'Reason'], d.map(a => [new Date(a.created_at).toLocaleString(), a.actor_employee_id ?? '—', esc(a.action), esc(a.entity_type) + ' #' + (a.entity_id ?? '—'), esc(a.old_values || '—'), esc(a.new_values || '—'), esc(a.reason || '—')]));
+  })();
+}
+
+
+/* ---------- Attendance corrections (super admin) ---------- */
+function corrections(el) {
+  const fs = [{ n: 'employee_id', l: 'Employee ID', t: 'number', r: 1 }, { n: 'work_date', l: 'Date', t: 'date', r: 1 },
+    { n: 'check_in', l: 'Check-in time', t: 'time', r: 1 }, { n: 'check_out', l: 'Check-out time (blank = still in)', t: 'time' },
+    { n: 'work_mode', l: 'Work mode', t: 'select', o: ['OFFICE', 'WFH'] }, { n: 'reason', l: 'Reason (kept in the audit log)', t: 'area', r: 1 }];
+  el.innerHTML = `<div class="card"><h3>Correct or add attendance</h3><p class="mu">Replaces that day's punches with one session and recalculates the daily result.</p>${formHTML(fs, 'Save correction')}</div>
+  <div class="card"><h3>View an employee's attendance</h3><div class="row"><div class="fld"><label>Employee ID</label><input id="vid" type="number" min="1"></div><button class="btn sec" id="vb">Load</button></div><div id="list"></div></div>`;
+  const view = safe(async id => {
+    id = id || $('#vid').value; if (!id) return toast('Enter an employee ID', 1);
+    $('#vid').value = id;
+    const d = await api('/admin/attendance?employee_id=' + id);
+    $('#list').innerHTML = tbl(['Date', 'Mode', 'Status', 'In', 'Out', 'Worked', 'Late', 'Finalized', 'Notes'], d.map(r => [r.work_date, r.work_mode, bdg(r.status), tm(r.check_in_at), tm(r.check_out_at), mins(r.worked_minutes), mins(r.late_minutes), yn(r.is_finalized), esc(r.notes || '—')]));
+  });
+  $('#vb').onclick = () => view();
+  bind(el, fs, async v => {
+    v.employee_id = +v.employee_id; if (!v.check_out) delete v.check_out;
+    const d = await api('/admin/attendance/correct', { method: 'POST', json: v });
+    toast(d.message + (d.daily_status ? ' — day result: ' + d.daily_status : '')); view(v.employee_id);
+  });
+}
+
+/* ---------- Automation (super admin) ---------- */
+function automation(el) {
+  const t = new Date(), y = new Date(t - 864e5).toISOString().slice(0, 10);
+  const f1 = [{ n: 'work_date', l: 'Day to finalize', t: 'date', r: 1, v: y }, { n: 'force', l: '', t: 'check', h: 'Recalculate days that are already finalized' }];
+  const f2 = [{ n: 'year', l: 'Year', t: 'number', r: 1, v: t.getFullYear() }, { n: 'month', l: 'Month (1-12)', t: 'number', r: 1, v: t.getMonth() + 1 }];
+  el.innerHTML = `<div class="card"><h3>Automation</h3><p class="mu">These jobs already run by themselves. Every 15 minutes the system finalizes each person's day <b>after their own shift has ended</b> (a day shift at about 00:30, an evening shift ending at 23:00 at about 02:00, a night shift ending at 06:00 at about 09:00), and on the 1st of each month it credits paid leave. People whose shift is still running are skipped and picked up on a later run. Use the buttons below to run them manually or catch up; both are safe to repeat.</p></div>
+  <div class="card"><h3>Finalize attendance for a day</h3>${formHTML(f1, 'Run finalization')}<div id="r1"></div></div>
+  <div class="card"><h3>Credit monthly leave</h3>${formHTML(f2, 'Run accrual')}<div id="r2"></div></div>`;
+  const forms = el.querySelectorAll('form');
+  const b1 = { querySelector: q => forms[0] }, b2 = { querySelector: q => forms[1] };
+  bind(b1, f1, async v => { const d = await api('/admin/jobs/finalize-day', { method: 'POST', json: { work_date: v.work_date, force: v.force === 'true' } }); toast('Finalization complete'); $('#r1').innerHTML = kv({ ...d, counts: Object.entries(d.counts || {}).map(([k, n]) => k + ': ' + n).join(', ') || '—' }); });
+  bind(b2, f2, async v => { const d = await api('/admin/jobs/accrue-month', { method: 'POST', json: { year: +v.year, month: +v.month } }); toast('Accrual complete'); $('#r2').innerHTML = kv(d); });
+}
+
+/* ---------- Overtime settings + auto-closed review (super admin) ---------- */
+function overtimeSettings(box) {
+  safe(async () => {
+    const c = await api('/overtime/settings');
+    const fs = [{ n: 'enabled', l: '', t: 'check', h: 'Ask employees when they complete their required hours', v: c.enabled },
+      { n: 'reminder_interval_minutes', l: 'Minutes between reminders', t: 'number', r: 1, v: c.reminder_interval_minutes },
+      { n: 'max_reminders', l: 'Reminders before the automatic close', t: 'number', r: 1, v: c.max_reminders },
+      { n: 'overtime_reminder_interval_minutes', l: 'Minutes between overtime reminders', t: 'number', r: 1, v: c.overtime_reminder_interval_minutes }];
+    box.innerHTML = `<div class="card"><h3>Overtime and forgotten check-out</h3><p class="mu">When someone completes the required hours of their own shift they are asked if they are still working. If they do not answer after the reminders above, their attendance is closed provisionally for your review. If they confirm, they get an overtime reminder at the last interval (120 minutes = every 2 hours).</p>${formHTML(fs, 'Save overtime settings')}</div>`;
+    bind(box, fs, async v => { await api('/overtime/settings', { method: 'PUT', json: { enabled: v.enabled === 'true', reminder_interval_minutes: +v.reminder_interval_minutes, max_reminders: +v.max_reminders, overtime_reminder_interval_minutes: +v.overtime_reminder_interval_minutes } }); toast('Overtime settings saved'); });
+  })();
+}
+const hhmm = v => v ? new Date(v).toTimeString().slice(0, 5) : '';
+function autoclosed(el) {
+  el.innerHTML = `<div class="card"><h3>Attendance closed automatically</h3><p class="mu">The employee did not answer the overtime questions, so the day was closed provisionally at the moment they completed their required hours. No overtime is counted until you confirm the time or correct it.</p><div class="row"><div class="fld"><label>Show</label><select id="sh"><option value="pending">Waiting for review</option><option value="reviewed">Reviewed</option><option value="all">All</option></select></div></div><div id="list"></div></div>`;
+  const load = safe(async () => {
+    const d = await api('/admin/auto-closed?show=' + $('#sh').value), L = $('#list'), by = {};
+    d.forEach(r => by[r.id] = r);
+    L.innerHTML = tbl(['Employee', 'Date', 'In', 'Closed at', 'Worked', 'Required', 'Reminders', 'Status', ''], d.map(r => [esc(r.employee) + ' <span class="mu">' + esc(r.employee_code) + '</span>', r.work_date, tm(r.check_in_at), tm(r.provisional_check_out_at), mins(r.worked_minutes), mins(r.required_minutes), r.reminders_sent,
+      r.reviewed_at ? '<span class="b ok">Reviewed</span>' : '<span class="b wa">Needs review</span>',
+      r.reviewed_at ? esc(r.review_note || '') : `<button class="lk" data-a="c" data-i="${r.id}">Confirm</button><button class="lk" data-a="x" data-i="${r.id}">Correct times</button>`]));
+    L.onclick = e => {
+      const b = e.target.closest('button[data-a]'); if (!b) return;
+      const r = by[b.dataset.i];
+      if (b.dataset.a === 'c') {
+        const fs = [{ n: 'note', l: 'Note (optional)', t: 'area' }], m = modal('Confirm closing time', `<p>Accept <b>${tm(r.provisional_check_out_at)}</b> as ${esc(r.employee)}'s check-out on ${r.work_date}?</p>` + formHTML(fs, 'Confirm'));
+        bind(m, fs, async v => { await api(`/admin/auto-closed/${r.id}/confirm`, { method: 'POST', json: { note: v.note || null } }); m.remove(); toast('Confirmed'); load(); });
+      } else {
+        const fs = [{ n: 'check_in', l: 'Check-in time', t: 'time', r: 1, v: hhmm(r.check_in_at) }, { n: 'check_out', l: 'Real check-out time', t: 'time', r: 1, v: hhmm(r.provisional_check_out_at) },
+          { n: 'reason', l: 'Reason (kept in the audit log)', t: 'area', r: 1 }], m = modal('Correct times for ' + r.employee, formHTML(fs, 'Save correction'));
+        bind(m, fs, async v => { const d2 = await api('/admin/attendance/correct', { method: 'POST', json: { employee_id: r.employee_id, work_date: r.work_date, check_in: v.check_in, check_out: v.check_out, reason: v.reason } }); m.remove(); toast(d2.message + (d2.daily_status ? ' - day result: ' + d2.daily_status : '')); load(); });
+      }
+    };
+  });
+  $('#sh').onchange = load; load();
+}
+
+/* ---------- Working time dashboard (the slicer controls the whole page) ---------- */
+const WT_PRESETS = [['today', 'Today'], ['last7', 'Last 7 days'], ['last14', 'Last 14 days'], ['last30', 'Last 30 days'], ['this_month', 'This month'], ['last_month', 'Last month'], ['custom', 'Custom']];
+const sgn = m => (m >= 0 ? '+' : '\u2212') + hm(Math.abs(m));
+const pl = (n, one, many) => n + ' ' + (n === 1 ? one : (many || one + 's'));
+const sd = iso => new Date(iso + 'T00:00:00').toLocaleDateString([], { day: 'numeric', month: 'short' });
+const ROLE = { SUPER_ADMIN: 'Super admin', MANAGER: 'Manager', EMPLOYEE: 'Employee' };
+const fmtD = iso => new Date(iso + 'T00:00:00').toLocaleDateString([], { day: 'numeric', month: 'short', year: 'numeric' });
+const KIND = { WORKDAY: 'Workday', WEEKEND: 'Weekend', HOLIDAY: 'Holiday', LEAVE: 'Leave' };
+function workChart(days) {
+  let rows = days.map(x => ({ tip: `${x.weekday} ${fmtD(x.date)}${x.kind !== 'WORKDAY' ? '\n' + (x.holiday || KIND[x.kind]) : ''}`, lab: dayLabel(x.date), w: x.worked_minutes, r: x.required_minutes, o: x.overtime_minutes, off: x.kind !== 'WORKDAY' && !x.worked_minutes, live: x.live }));
+  const weekly = days.length > 62;
+  if (weekly) {                                     // long periods are shown per week so the bars stay readable
+    const g = {};
+    days.forEach(x => { const d = new Date(x.date + 'T00:00:00'); d.setDate(d.getDate() - ((d.getDay() + 6) % 7)); const k = iso(d); (g[k] = g[k] || { w: 0, r: 0, o: 0 }); g[k].w += x.worked_minutes; g[k].r += x.required_minutes; g[k].o += x.overtime_minutes; });
+    rows = Object.entries(g).map(([k, v]) => ({ tip: 'Week of ' + fmtD(k), lab: k.slice(5), w: v.w, r: v.r, o: v.o, off: false }));
+  }
+  const max = Math.max(60, ...rows.map(r => Math.max(r.w, r.r))) * 1.12, step = Math.ceil(rows.length / (window.innerWidth < 600 ? 7 : 16));
+  const cols = rows.map(r => {
+    const base = r.w > r.r && r.r > 0 ? r.r / r.w * 100 : 100;
+    const over = r.w > r.r && r.r > 0, bg = r.off ? 'var(--bd)' : r.r && r.w < r.r * .75 && !r.live ? 'var(--low)' : 'var(--bar)', h = r.w ? Math.max(1.5, r.w / max * 100) : 0.8;
+    const tip = `${r.tip}\nWorked ${hm(r.w)}${r.r ? ' of ' + hm(r.r) : ''}${r.o ? '\nOvertime ' + hm(r.o) : ''}${r.live ? '\nStill in progress' : ''}`;
+    const bar = over ? `<div class="stk" style="height:${h}%"><s style="height:${100 - base}%;background:var(--over)"></s><s style="height:${base}%;background:var(--bar)"></s></div>` : `<i style="height:${h}%;background:${bg}${r.live ? ';opacity:.55' : ''}"></i>`;
+    return `<div class="col" data-t="${esc(tip)}">${bar}${r.r ? `<u style="bottom:${r.r / max * 100}%"></u>` : ''}</div>`;
+  }).join('');
+  const labels = rows.map((r, i) => `<span>${i % step === 0 ? esc(r.lab) : ''}</span>`).join('');
+  return `<div class="wc">${cols}</div><div class="bl">${labels}</div><div class="leg"><span style="--c:var(--bar)">Worked</span><span style="--c:var(--over)">Overtime</span><span style="--c:var(--low)">Under 75% of required</span><span style="--c:var(--bd)">Weekend, holiday or leave</span><span class="dash">Required time</span></div>${weekly ? '<p class="mu" style="margin:8px 0 0;font-size:12px">This period is longer than 62 days, so each bar is one week.</p>' : ''}`;
+}
+function workingtime(el) {
+  let sl = { preset: 'last7' };
+  try { sl = { ...sl, ...JSON.parse(sessionStorage.getItem('wt') || '{}') }; } catch (e) {}
+  const save = () => { try { sessionStorage.setItem('wt', JSON.stringify(sl)); } catch (e) {} };
+  el.innerHTML = `<div class="card"><h3>Slicer</h3><div class="chips" id="chips">${WT_PRESETS.map(p => `<button class="chip" data-p="${p[0]}">${p[1]}</button>`).join('')}</div>
+    <div class="row"><div class="fld"><label>From</label><input type="date" id="from"></div><div class="fld"><label>To</label><input type="date" id="to"></div><div class="fld" id="whobox" style="display:none;min-width:240px"><label>Employee</label><select id="who"></select></div></div></div>
+    <div class="stats" id="kp">${skel(6)}</div>
+    <div class="card"><h3 id="ct">Working time per day</h3><div id="chart"></div></div>
+    <div class="card"><div class="row" style="justify-content:space-between;align-items:center;margin-top:0"><h3 style="margin:0">Day by day</h3><button class="btn sec" id="csv">Export CSV</button></div><div id="tb"></div></div>`;
+  let data = null;
+  const chips = () => el.querySelectorAll('.chip').forEach(c => c.classList.toggle('on', c.dataset.p === sl.preset));
+  const paint = d => {
+    const m = d.summary, diff = m.difference_minutes;
+    $('#ct').textContent = `${d.employee.name}, ${fmtD(d.start)} to ${fmtD(d.end)}`;
+    $('#kp').innerHTML = stat('⏱', '', 'Total working time', hm(m.total_worked_minutes), m.days_worked + ' days worked')
+      + stat('', '', 'Daily average', hm(m.average_worked_minutes), 'per day worked')
+      + stat('', diff >= 0 ? 'ok' : 'wa', 'Required time', hm(m.total_required_minutes), sgn(diff) + ' vs required')
+      + stat('', m.overtime_minutes ? 'wa' : '', 'Overtime', hm(m.overtime_minutes))
+      + stat('', '', 'Days worked', m.days_worked + ' / ' + m.working_days, m.leave_days + ' leave, ' + m.absent_days + ' absent')
+      + stat('⏰', m.late_days ? 'er' : 'ok', 'Late arrivals', m.late_days, m.late_days === 1 ? 'day' : 'days');
+    $('#chart').innerHTML = workChart(d.days);
+    $('#tb').innerHTML = tbl(['Date', 'Day', 'Type', 'Status', 'In', 'Out', 'Worked', 'Required', 'Difference', 'Overtime', 'Late'],
+      [...d.days].reverse().map(x => {
+        const work = x.kind === 'WORKDAY' && x.required_minutes, today = x.date === d.today;
+        return [`${x.date}${today ? ' <span class="b wa">today</span>' : ''}`, x.weekday, esc(x.holiday || KIND[x.kind]), x.status ? bdg(x.status) + (x.live ? ' <span class="b ok">live</span>' : '') : '\u2014',
+          tm(x.check_in_at), tm(x.check_out_at), x.worked_minutes ? hm(x.worked_minutes) : '\u2014', work ? hm(x.required_minutes) : '\u2014',
+          work && !x.live && (x.worked_minutes || x.date < d.today) ? sgn(x.worked_minutes - x.required_minutes) : '\u2014', x.overtime_minutes ? hm(x.overtime_minutes) : '\u2014', x.late_minutes ? mins(x.late_minutes) : '\u2014'];
+      })).replace(/<tr>/g, '<tr>');
+    [...el.querySelectorAll('#tb tbody tr')].forEach((tr, i) => { const x = [...d.days].reverse()[i]; if (x.kind !== 'WORKDAY' && !x.worked_minutes) tr.classList.add('off'); if (x.date === d.today) tr.classList.add('today'); });
+  };
+  const load = safe(async () => {
+    const q = new URLSearchParams();
+    if (sl.preset === 'custom') { if (!sl.start || !sl.end) return; q.set('start', sl.start); q.set('end', sl.end); } else q.set('preset', sl.preset);
+    if (sl.emp) q.set('employee_id', sl.emp);
+    data = await api('/attendance/report?' + q);       // the server resolves the period in the company timezone
+    $('#from').value = data.start; $('#to').value = data.end;
+    paint(data);
+  });
+  el.querySelectorAll('.chip').forEach(c => c.onclick = () => {
+    sl.preset = c.dataset.p;
+    if (sl.preset === 'custom') { sl.start = $('#from').value; sl.end = $('#to').value; }
+    save(); chips(); load();
+  });
+  const custom = () => { sl.preset = 'custom'; sl.start = $('#from').value; sl.end = $('#to').value; save(); chips(); load(); };
+  $('#from').onchange = custom; $('#to').onchange = custom;
+  $('#csv').onclick = () => {
+    if (!data) return;
+    const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+    const rows = [['Date', 'Day', 'Type', 'Status', 'Check in', 'Check out', 'Worked (min)', 'Required (min)', 'Overtime (min)', 'Late (min)'],
+      ...data.days.map(x => [x.date, x.weekday, x.holiday || KIND[x.kind], x.status || '', x.check_in_at || '', x.check_out_at || '', x.worked_minutes, x.required_minutes, x.overtime_minutes, x.late_minutes])];
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([rows.map(r => r.map(q).join(',')).join('\n')], { type: 'text/csv' }));
+    a.download = `working-time-${data.employee.name.replace(/\s+/g, '-')}-${data.start}-to-${data.end}.csv`; a.click();
+  };
+  chips();
+  safe(async () => {
+    const people = await g2('/attendance/report/people');       // managers see their team, the Super Admin sees everyone
+    if (people && people.length > 1) {
+      if (!people.some(p => p.id === sl.emp)) delete sl.emp;
+      $('#whobox').style.display = '';
+      $('#who').innerHTML = people.map((p, i) => `<option value="${p.id}"${p.id === (sl.emp || people[0].id) ? ' selected' : ''}>${esc(p.name)}${i === 0 ? ' (me)' : ''}, ${esc(p.role.replace('_', ' ').toLowerCase())}</option>`).join('');
+      $('#who').onchange = () => { sl.emp = +$('#who').value === people[0].id ? undefined : +$('#who').value; save(); load(); };
+    } else delete sl.emp;
+    load();
+  })();
+  auto = setInterval(() => { if (!document.querySelector('.ov')) load(); }, 60000);     // keeps today's running time live
+}
+
+function emailadmin(el) {
+  safe(async () => {
+    const d = await api('/admin/email/settings'), h = await api('/admin/email/history');
+    el.innerHTML = `<div class="card"><h3>Email management</h3><p>SMTP: ${d.configured ? 'Configured (not yet tested)' : 'Not configured'} · ${esc(d.host || '')} · ${esc(d.sender || '')}</p><p>Configure credentials in .env and restart the backend.</p><label class="chk"><input id="emenabled" type="checkbox" ${d.enabled?'checked':''}> Enable automatic email</label><div id="emkinds">${Object.entries(d.available).map(([k,v])=>`<p><label class="chk"><input type="checkbox" value="${esc(k)}" ${d.kinds.includes(k)?'checked':''}> ${esc(v)}</label></p>`).join('')}</div><div class="row"><button class="btn" id="emsave">Save settings</button><button class="btn sec" id="emtest">Send test to my email</button><button class="btn sec" id="emretry">Retry failed emails</button><button class="btn sec" id="emrefresh">Refresh</button></div></div><div class="card"><h3>Email history</h3><p>${Object.entries(h.counts).map(([k,v])=>`${esc(k)}: ${esc(v)}`).join(' · ') || 'No emails yet'}</p>${tbl(['Recipient','Subject','Status','Attempts','Error'],h.items.map(r=>[esc(r.to_address),esc(r.subject),esc(r.status),esc(r.attempts),esc(r.last_error||'')]))}</div>`;
+    $('#emsave').onclick=safe(async()=>{await api('/admin/email/settings',{method:'PUT',json:{enabled:$('#emenabled').checked,kinds:[...el.querySelectorAll('#emkinds input:checked')].map(x=>x.value)}});toast('Email settings saved');});
+    $('#emtest').onclick=safe(async()=>{const r=await api('/admin/email/test',{method:'POST'});toast(r.message+' to '+r.recipient);});
+    $('#emretry').onclick=safe(async()=>{const r=await api('/admin/email/retry',{method:'POST'});toast(r.message);emailadmin(el);});
+    $('#emrefresh').onclick=()=>emailadmin(el);
+  })();
+}
+
+const VIEWS = { emailadmin, workingtime, autoclosed, corrections, automation, home, leaves, approvals, wfh, wfhapprovals, attendance, team, conflicts, holidays, shifts, employees, balances, settings, audit, password };
+tok ? boot() : showLogin();
+</script>
+</body>
+</html>
