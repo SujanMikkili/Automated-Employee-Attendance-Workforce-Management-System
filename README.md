@@ -1,4 +1,4 @@
-# Employee Attendance Management System
+# Automated Employee Attendance & Workforce Management System
 
 ## Project overview
 
