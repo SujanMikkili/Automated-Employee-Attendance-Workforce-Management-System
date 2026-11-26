@@ -458,7 +458,7 @@ Recommended integration scenarios: role restrictions, multiple attendance sessio
 - SMTP test delivery and the initial overtime email were observed successfully during development. Full reminder lifecycle and failure/retry scenarios still require end-to-end testing.
 - Dashboard calculations are under review, including person-day denominators and reconciliation of late, absent and present counts.
 - Existing reminder deadlines may retain the interval used when they were created; verify the interval-change correction before relying on immediate rescheduling.
-- The latest working copy must use consistent email module names and model imports. Verify whether email/notification models are consolidated into `models.py` or remain in `models_extra.py`.
+- The latest working copy must use consistent email module names and model imports. Verify whether email/notification models are consolidated into `models.py`.
 - Verify the active Alembic revision chain against the actual database schema before upgrading an existing installation.
 - Older employee creation code may enforce Gmail-only employee addresses; verify the current validation policy before onboarding corporate email accounts.
 
