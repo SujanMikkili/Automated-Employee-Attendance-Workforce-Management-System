@@ -1,16 +1,5 @@
-<div align="center">Employee Attendance System
-Smart Attendance Tracking · Automated Workflows · Workforce Analytics
-
-
-
-
-
-
-
-Attendance • Shift Management • Leave & WFH • Overtime • Email Notifications • Dashboards
-
-Features · Architecture · Setup · Email · API
-</div>Project overview
+Employee Attendance Management System
+Project overview
 A web-based employee attendance and workforce management application built with FastAPI, PostgreSQL, SQLAlchemy and APScheduler. It centralizes attendance tracking, shifts, leave, work-from-home requests, overtime, automated notifications and administrative reporting in a role-based web interface.
 Table of contents
 - Features
